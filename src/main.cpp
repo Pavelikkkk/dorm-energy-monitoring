@@ -1,63 +1,93 @@
+// main.cpp
+// ────────────────────────────────────────────────────────────────
+// Dorm Energy Simulator — CLI entry point
+// C++20 console application for energy consumption simulation
+// Parses command-line arguments using CLI11
+// Supports: --version, simulate subcommand with --days, --output, --verbose
+// ────────────────────────────────────────────────────────────────
+
 #include <iostream>
 #include <string>
-#include "D:\programmingThings\Projects\diaplome\dorm-energy-sim\external\CLI11\include\CLI\CLI.hpp"
+#include <string_view>
+#include <format>           
+#include <CLI/CLI.hpp> 
 
-// void print_usage(){
-//     std::cout << "Dorm Energy Simulator - usage:\n";
-//     std::cout << "  sim --version, -v     show version\n";
-//     std::cout << "  sim --help, -h        show help menu\n";
-//     std::cout << "  sim simulate          soon\n";
-// }
+void print_version() noexcept {
+    std::cout << std::format("Dorm Energy Simulator\n"
+                             "Version: 1.1\n"
+                             "Author: Pasha\n",
+                             __DATE__);
+}
+
+void run_simulation(int days, std::string_view output_file, bool verbose) {
+    std::cout << "Starting simulation:\n"
+              << std::format("  Days:           {}\n", days)
+              << std::format("  Output file:    {}\n", output_file);
+
+    if (verbose) {
+        std::cout << "  Verbose mode:   enabled\n";
+    }
+
+    std::cout << std::format("Simulation in progress... (generating {} days of data)\n", days);
+    std::cout << std::format("Results saved to {}\n", output_file);
+}
 
 
 int main(int argc, char* argv[]){
+    // ────────────────────────────────────────────────────────────────
+    // Application setup
+    // ────────────────────────────────────────────────────────────────
 
     CLI::App app{"Dorm Energy Simulator — Energy consumption simulation and monitoring in a student dormitory"};
     
-    bool show_version{false};
-    app.add_flag("--version, -v", show_version, "Show version");
+    bool version_flag{false};
+    app.add_flag("--version, -v", version_flag, "Show version");
 
-    auto simulate = app.add_subcommand("simulate", "Run imitation");
+    // ────────────────────────────────────────────────────────────────
+    // Subcommand: simulate
+    // ────────────────────────────────────────────────────────────────
+    auto* sim = app.add_subcommand("simulate", "Run energy consumption simulation");  
 
     int days{30}; // default 
-
-    simulate->add_option("--days,-d", days, "Simulation days")
+    sim->add_option("--days,-d", days, "Simulation days")
             ->default_val(30)
-            ->check(CLI::Range(1, 365, "days"));
+            ->check(CLI::Range(1, 365, "days"))
+            ->required(false);
 
     std::string output_file{"result.csv"};
-
-    simulate->add_option("--output,-o", output_file, "Файл для сохранения результатов")
+    sim->add_option("--output,-o", output_file, "Save results")
        ->default_val("result.csv");
 
     bool verbose{false};
+    sim->add_flag("--verbose,-v", verbose, "Logs");   
+    
+    // ────────────────────────────────────────────────────────────────
+    // Parse arguments
+    // ────────────────────────────────────────────────────────────────
 
-    simulate->add_flag("--verbose,-v", verbose, "Подробный вывод (логи, промежуточные данные)");   
+    try {
+        app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError& e) {
+        return app.exit(e);
+    }
     
-    CLI11_PARSE(app, argc, argv);
-    
-    if(show_version){
-        std::cout << "Dorm Energy Simulator version 0.0.1-dev\n";
+    // ────────────────────────────────────────────────────────────────
+    // Business logic — narrow scopes
+    // ────────────────────────────────────────────────────────────────
+
+    if(version_flag){
+        print_version();
         return 0;
     }
 
-    if(simulate->parsed()){
-        std::cout << "Запуск симуляции:\n";
-        std::cout << "  Дней:           " << days << "\n";
-        std::cout << "  Выходной файл:  " << output_file << "\n";
-        if (verbose) {
-            std::cout << "  Подробный режим: включён\n";
-        }
-
-        std::cout << "Имитация запущена... (данные генерируются)\n";
-        std::cout << "Результат сохранён в " << output_file << "\n";
-
+    if(sim->parsed()){
+        run_simulation(days, output_file, verbose);
         return 0;
     }
 
-    std::cerr << "Команда не указана. Попробуйте:\n";
-    std::cerr << "  sim --version\n";
-    std::cerr << "  sim simulate --help\n";
+    std::cerr << "No command provided.\n\n";
+    std::cout << app.help() << "\n";
     
     return 1;
 }

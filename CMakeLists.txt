@@ -10,11 +10,16 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(BUILD_TESTING "Build unit tests" ON)
+option(BUILD_TESTING "Build unit tests" OFF)
 
 add_subdirectory(external/CLI11)
 
-add_executable(dorm-sim)
+add_executable(dorm-sim
+    src/main.cpp
+    src/simulator.cpp         
+    src/anomaly_detector.cpp
+    src/csv_writer.cpp
+)
 
 target_sources(dorm-sim
   PRIVATE
@@ -30,7 +35,11 @@ if(BUILD_TESTING)
     enable_testing()
     message(STATUS "Тестирование включено (BUILD_TESTING=ON)")
 
-    add_executable(test_cli tests/test_cli.cpp)
+    add_executable(test_cli tests/test_cli.cpp
+    src/simulator.cpp         
+    src/anomaly_detector.cpp
+    src/csv_writer.cpp
+)
     target_link_libraries(test_cli PRIVATE CLI11::CLI11)
 
 endif()

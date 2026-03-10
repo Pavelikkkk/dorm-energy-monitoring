@@ -12,6 +12,12 @@
 #include <format>           
 #include <CLI/CLI.hpp> 
 
+#include "../include/measurement.hpp"
+#include "../include/simulator.hpp"
+#include "../include/anomaly_detector.hpp"
+#include "../include/csv_writer.hpp"       
+
+
 void print_version() noexcept {
     std::cout << std::format("Dorm Energy Simulator\n"
                              "Version: 1.1\n"
@@ -51,8 +57,7 @@ int main(int argc, char* argv[]){
     int days{30}; // default 
     sim->add_option("--days,-d", days, "Simulation days")
             ->default_val(30)
-            ->check(CLI::Range(1, 365, "days"))
-            ->required(false);
+            ->check(CLI::Range(1, 365, "days"));
 
     std::string output_file{"result.csv"};
     sim->add_option("--output,-o", output_file, "Save results")
@@ -82,7 +87,9 @@ int main(int argc, char* argv[]){
     }
 
     if(sim->parsed()){
-        run_simulation(days, output_file, verbose);
+        auto data = generate_simulation(days);
+        detect_anomalies(data);
+        save_to_csv(data, output_file);
         return 0;
     }
 

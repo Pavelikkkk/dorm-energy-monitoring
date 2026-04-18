@@ -19,7 +19,7 @@
 - Парсинг аргументов командной строки с помощью CLI11
 - Поддержка флагов: `--version` / `-v`, подкоманда `simulate`
 
-Запуск:
-./dorm-sim --version
-./dorm-sim simulate --days 30 --output result.csv
-./dorm-sim simulate --help
+## Архитектурные решения
+Подробные ADR находятся в папке `docs/adr/`.
+
+

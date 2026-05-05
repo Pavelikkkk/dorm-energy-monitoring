@@ -3,10 +3,10 @@
 #include <iostream>
 #include <string>
 #include <string_view>
-#include <format>           
-#include <CLI/CLI.hpp> 
+#include <format>
 #include <clocale>
 
+#include <CLI/CLI.hpp>
 #include "dorm_energy/simulation/generator.hpp"
 #include "dorm_energy/detection/anomaly_detector.hpp"
 #include "dorm_energy/core/measurement.hpp"    
@@ -93,10 +93,21 @@ int main(int argc, char* argv[]){
         std::cout << std::format("Сгенерировано измерений: {}\n", data.size());
         std::cout << std::format("Обнаружено аномалий: {}\n", anomaly_count);
 
-        if (verbose) {
+        if (verbose)
+        {
             std::cout << "\nПервые 10 измерений:\n";
-            for (size_t i = 0; i < std::min<size_t>(10, data.size()); ++i) {
+            for (size_t i = 0; i < std::min<size_t>(10, data.size()); ++i)
+            {
                 std::cout << dorm_energy::core::to_string(data[i]) << "\n";
+            }
+
+            std::cout << "\nОбнаруженные аномалии (" << anomaly_count << " шт.):\n";
+            for (const auto &m : data)
+            {
+                if (m.is_anomaly)
+                {
+                    std::cout << dorm_energy::core::to_string(m) << "\n";
+                }
             }
         }
 

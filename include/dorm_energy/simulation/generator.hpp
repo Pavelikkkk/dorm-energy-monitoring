@@ -11,10 +11,10 @@ namespace dorm_energy::simulation {
  * @brief Конфигурация генератора синтетических данных
  */
 struct GeneratorConfig {
-    int         days = 30;                    
-    unsigned    seed = std::random_device{}(); 
-    bool        inject_anomalies = false;     
-    double      anomaly_rate = 0.03;          
+    int days{30};
+    unsigned seed{42};
+    bool inject_anomalies{false};
+    double anomaly_rate{0.03};
 
     GeneratorConfig() = default;
 };
@@ -42,7 +42,11 @@ public:
      * @param seed фиксированный seed
      * @return SimulationData
      */
-    static core::SimulationData generate_deterministic(int days, unsigned seed = 42);
+    static core::SimulationData generate_deterministic(
+        int days,
+        unsigned seed = 42,
+        bool inject_anomalies = false,
+        double anomaly_rate = 0.03);
 
 private:
     /**
@@ -50,7 +54,12 @@ private:
      * @param day_of_week день недели (0=понедельник ... 6=воскресенье)
      * @param gen генератор случайных чисел
      */
-    core::SimulationData generate_day(int day_of_week, std::mt19937& gen) const;
+    static core::SimulationData generate_day(
+        int day_of_week,
+        core::TimePoint day_start,
+        std::mt19937 &gen,
+        bool inject_anomalies,
+        double anomaly_rate);
 
     GeneratorConfig config_;
 };

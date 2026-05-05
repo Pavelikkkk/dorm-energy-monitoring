@@ -1,8 +1,9 @@
 // src/detection/anomaly_detector.cpp
 #include "dorm_energy/detection/anomaly_detector.hpp"
+
 #include <format>
 #include <iostream>
-#include <ctime>
+#include <chrono>
 
 namespace dorm_energy::detection {
 
@@ -11,36 +12,40 @@ AnomalyDetector::AnomalyDetector(AnomalyDetectorConfig config)
 {
 }
 
-int AnomalyDetector::detect(core::SimulationData& data) const
+int AnomalyDetector::detect(core::SimulationData &data) const
 {
-    int anomaly_count = 0;
-    std::tm tm_buf; 
+    int anomaly_count{0};
 
-    for (auto& m : data) {
-        if (localtime_s(&tm_buf, &m.timestamp) != 0) {
-            continue; 
-        }
-        
-        int hour = tm_buf.tm_hour;
+    const auto *zone = std::chrono::locate_zone(config_.timezone);
 
-        bool is_anomaly = false;
+    for (auto &m : data)
+    {
+
+        auto zoned = std::chrono::zoned_time{zone, m.timestamp}; // еще раз повторить chrono библиотеку
+        auto local_tp = zoned.get_local_time();
+
+        auto days_since_epoch = std::chrono::floor<std::chrono::days>(local_tp);
+        auto hms = std::chrono::hh_mm_ss{local_tp - days_since_epoch};
+
+        bool is_anomaly{false};
 
         // Правило 1: Слишком высокое потребление
-        if (m.power_kw > config_.high_power_threshold) {
+        if (m.power_kw > config_.high_power_threshold)
+        {
             is_anomaly = true;
         }
         // Правило 2: Слишком низкое потребление ночью
-        else if (hour >= config_.night_start_hour && hour <= config_.night_end_hour &&
-                 m.power_kw < config_.night_low_threshold) {
+        else if (m.power_kw < AnomalyDetectorConfig::night_low_threshold &&
+                 hms.to_duration() >= AnomalyDetectorConfig::night_start.to_duration() &&
+                 hms.to_duration() <= AnomalyDetectorConfig::night_end.to_duration())
+        {
             is_anomaly = true;
         }
 
-        if (is_anomaly) {
+        if (is_anomaly)
+        {
             m.is_anomaly = true;
             anomaly_count++;
-
-            std::cout << std::format("АНОМАЛИЯ в {:02}:00 — {:.2f} кВт\n", 
-                                     hour, m.power_kw);
         }
     }
 
@@ -51,7 +56,7 @@ std::vector<core::PowerMeasurement>
 AnomalyDetector::get_anomalies(const core::SimulationData& data) const
 {
     std::vector<core::PowerMeasurement> anomalies;
-    anomalies.reserve(data.size() / 10); 
+    anomalies.reserve(data.size() / 10); // оптимизировать под данные и что за число 10
 
     for (const auto& m : data) {
         if (m.is_anomaly) {

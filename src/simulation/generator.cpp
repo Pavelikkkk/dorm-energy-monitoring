@@ -2,6 +2,8 @@
 #include "dorm_energy/simulation/generator.hpp"
 #include <format>
 #include <iostream>
+#include <chrono>
+#include <random>
 
 namespace dorm_energy::simulation {
 
@@ -9,55 +11,87 @@ SyntheticDataGenerator::SyntheticDataGenerator(GeneratorConfig config)
     : config_{std::move(config)}
 {
     if (config_.days < 1 || config_.days > 365) {
-        config_.days = 30; 
+        config_.days = 30;
     }
 }
 
 core::SimulationData SyntheticDataGenerator::generate() const
 {
-    std::mt19937 gen(config_.seed);
-    return generate_deterministic(config_.days, config_.seed);
+    return generate_deterministic(
+        config_.days,
+        config_.seed,
+        config_.inject_anomalies,
+        config_.anomaly_rate);
+    ;
 }
 
-core::SimulationData SyntheticDataGenerator::generate_deterministic(int days, unsigned seed)
+core::SimulationData SyntheticDataGenerator::generate_deterministic(
+    int days,
+    unsigned seed,
+    bool inject_anomalies,
+    double anomaly_rate)
 {
-    std::mt19937 gen(seed);
-    core::SimulationData all_data;
-    all_data.reserve(static_cast<size_t>(days) * 24);
+    core::SimulationData data;
+    data.reserve(static_cast<size_t>(days) * 24); // оптимизация памяти
 
-    for (int day = 0; day < days; ++day) {
-        int day_of_week = day % 7;
-        auto day_data = SyntheticDataGenerator{}.generate_day(day_of_week, gen); 
-        all_data.insert(all_data.end(),
-                        std::make_move_iterator(day_data.begin()),
-                        std::make_move_iterator(day_data.end()));
+    std::mt19937 gen{seed}; // ← ОДИН генератор на всю симуляцию
+
+    // Фиксированная начальная дата (чтобы при seed=42 всегда были одинаковые данные)
+    auto base_time = std::chrono::sys_days{
+        std::chrono::year{2025} / std::chrono::January / 1};
+
+    std::chrono::weekday start_dow{base_time};
+
+    for (int d = 0; d < days; ++d)
+    {
+        int day_of_week = (start_dow + std::chrono::days{d}).c_encoding();
+
+        auto day_start = base_time + std::chrono::days{d};
+
+        // Вызываем статический generate_day и передаём параметры аномалий
+        auto day_data = generate_day(
+            day_of_week,
+            day_start,
+            gen,
+            inject_anomalies,
+            anomaly_rate);
+
+        data.insert(data.end(), day_data.begin(), day_data.end());
     }
 
-    return all_data;
+    return data;
 }
 
-core::SimulationData SyntheticDataGenerator::generate_day(int day_of_week, std::mt19937& gen) const
+core::SimulationData SyntheticDataGenerator::generate_day(
+    int day_of_week,
+    core::TimePoint day_start,
+    std::mt19937 &gen,
+    bool inject_anomalies,
+    double anomaly_rate)
 {
     core::SimulationData day_data;
     day_data.reserve(24);
 
+    // Базовые уровни потребления
     double night_base   = 5.0;
     double morning_peak = 25.0;
     double day_base     = 12.0;
     double evening_peak = 35.0;
 
-    if (day_of_week >= 5) {  
+    if (day_of_week >= 5)
+    { // 5 и 6 — выходные
         morning_peak *= 0.6;
         evening_peak *= 0.7;
     }
 
     std::normal_distribution<double> noise(0.0, 2.5);
+    std::uniform_int_distribution<int> anomaly_dist(0, 999);
 
-    std::time_t now = std::time(nullptr);
-
-    for (int hour = 0; hour < 24; ++hour) {
+    for (int hour = 0; hour < 24; ++hour)
+    {
         double base = night_base;
-        if (hour >= 7 && hour < 10)      base = morning_peak;
+        if (hour >= 7 && hour < 10)
+            base = morning_peak;
         else if (hour >= 10 && hour < 17) base = day_base;
         else if (hour >= 17 && hour < 23) base = evening_peak;
 
@@ -65,18 +99,21 @@ core::SimulationData SyntheticDataGenerator::generate_day(int day_of_week, std::
         if (power < 0.0) power = 0.0;
 
         bool is_anomaly = false;
-        if (config_.inject_anomalies && 
-            (static_cast<double>(std::uniform_int_distribution<int>(0, 999)(gen)) / 1000.0 < config_.anomaly_rate)) {
-            power *= 2.8;  
+        if (inject_anomalies &&
+            (static_cast<double>(anomaly_dist(gen)) / 1000.0 < anomaly_rate))
+        {
+            power *= 2.8;
             is_anomaly = true;
         }
 
-        std::time_t timestamp = now - (23 - hour + day_of_week * 24LL * 3600) * 3600LL; 
+        auto current_time = day_start + std::chrono::hours(hour);
 
-        day_data.emplace_back(timestamp, power, is_anomaly);
+        day_data.emplace_back(current_time, power, is_anomaly);
     }
 
     return day_data;
 }
 
 } // namespace dorm_energy::simulation
+
+// как лучше оформлять код

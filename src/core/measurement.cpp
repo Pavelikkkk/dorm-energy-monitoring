@@ -6,9 +6,8 @@ namespace dorm_energy::core {
 
 std::string to_string(const PowerMeasurement& m)
 {
-    return std::format(" {:%Y-%m-%d %H:%M} | {:.2f} кВт | аномалия: {}",
-                       m.timestamp,
-                       m.power_kw,
+    return std::format(" {:%Y-%m-%d %H:%M} (час {}) | {:.2f} кВт | аномалия: {}",
+                       m.timestamp, m.hour_of_day, m.power_kw,
                        m.is_anomaly ? "ДА" : "нет");
 }
 

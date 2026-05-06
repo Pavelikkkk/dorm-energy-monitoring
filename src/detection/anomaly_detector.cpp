@@ -3,7 +3,6 @@
 
 #include <format>
 #include <iostream>
-#include <chrono>
 
 namespace dorm_energy::detection {
 
@@ -16,17 +15,8 @@ int AnomalyDetector::detect(core::SimulationData &data) const
 {
     int anomaly_count{0};
 
-    const auto *zone = std::chrono::locate_zone(config_.timezone);
-
     for (auto &m : data)
     {
-
-        auto zoned = std::chrono::zoned_time{zone, m.timestamp}; // еще раз повторить chrono библиотеку
-        auto local_tp = zoned.get_local_time();
-
-        auto days_since_epoch = std::chrono::floor<std::chrono::days>(local_tp);
-        auto hms = std::chrono::hh_mm_ss{local_tp - days_since_epoch};
-
         bool is_anomaly{false};
 
         // Правило 1: Слишком высокое потребление
@@ -36,8 +26,8 @@ int AnomalyDetector::detect(core::SimulationData &data) const
         }
         // Правило 2: Слишком низкое потребление ночью
         else if (m.power_kw < AnomalyDetectorConfig::night_low_threshold &&
-                 hms.to_duration() >= AnomalyDetectorConfig::night_start.to_duration() &&
-                 hms.to_duration() <= AnomalyDetectorConfig::night_end.to_duration())
+                 m.hour_of_day >= 0 &&
+                 m.hour_of_day <= 6)
         {
             is_anomaly = true;
         }
@@ -56,7 +46,8 @@ std::vector<core::PowerMeasurement>
 AnomalyDetector::get_anomalies(const core::SimulationData& data) const
 {
     std::vector<core::PowerMeasurement> anomalies;
-    anomalies.reserve(data.size() / 10); // оптимизировать под данные и что за число 10
+    uint8_t anomalies_percent{10}; // TODO: вынести в конфиг и оптимизировать под данные 
+    anomalies.reserve(data.size() / anomalies_percent); 
 
     for (const auto& m : data) {
         if (m.is_anomaly) {

@@ -16,13 +16,14 @@ using TimePoint = Clock::time_point;
 
 struct PowerMeasurement {
     TimePoint timestamp{};
+    int hour_of_day{-1};
     double power_kw{0.0};
     bool is_anomaly{false};
 
     PowerMeasurement() = default;
 
-    PowerMeasurement(TimePoint ts, double power, bool anomaly = false)
-        : timestamp{ts}, power_kw{power}, is_anomaly{anomaly} {}
+    PowerMeasurement(TimePoint ts,int hour = -1, double power = 0.0, bool anomaly = false)
+        : timestamp{ts}, hour_of_day{hour}, power_kw{power}, is_anomaly{anomaly} {}
 };
 
 /**

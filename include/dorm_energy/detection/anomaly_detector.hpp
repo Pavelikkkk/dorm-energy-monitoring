@@ -17,7 +17,7 @@ struct AnomalyDetectorConfig
     constexpr static std::chrono::hh_mm_ss<std::chrono::minutes> night_start{std::chrono::hours{0}};
     constexpr static std::chrono::hh_mm_ss<std::chrono::minutes> night_end{std::chrono::hours{6}};
 
-    std::string timezone{"Europe/Moscow"}; // возможно, стоит вынести в отдельный конфиг приложения
+    std::string timezone{"Europe/Moscow"}; // TODO: вынести в отдельный конфиг приложения позже
 
     AnomalyDetectorConfig() = default;
 };

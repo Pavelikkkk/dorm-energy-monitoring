@@ -13,8 +13,18 @@ namespace dorm_energy::simulation {
 struct GeneratorConfig {
     int days{30};
     unsigned seed{42};
+
+    // Параметры аномалий
     bool inject_anomalies{false};
     double anomaly_rate{0.03};
+
+    // Коэффициенты поведения
+    double  weekend_morning_factor{0.6};
+    double  weekend_evening_factor{0.7};
+    double  anomaly_multiplier{2.8};
+
+    // Для распределения аномалий
+    int     anomaly_distribution_max{1000};
 
     GeneratorConfig() = default;
 };
@@ -43,7 +53,7 @@ public:
      * @return SimulationData
      */
     static core::SimulationData generate_deterministic(
-        int days,
+        int days = 30,
         unsigned seed = 42,
         bool inject_anomalies = false,
         double anomaly_rate = 0.03);
@@ -54,12 +64,10 @@ private:
      * @param day_of_week день недели (0=понедельник ... 6=воскресенье)
      * @param gen генератор случайных чисел
      */
-    static core::SimulationData generate_day(
+    core::SimulationData generate_day(
         int day_of_week,
         core::TimePoint day_start,
-        std::mt19937 &gen,
-        bool inject_anomalies,
-        double anomaly_rate);
+        std::mt19937 &gen) const;
 
     GeneratorConfig config_;
 };

@@ -72,17 +72,19 @@ int main(int argc, char* argv[]){
     
     if (simulate->parsed()) {
         std::cout << "Запуск симуляции энергопотребления...\n";
-        std::cout << std::format("Дней: {} | Аномалии: {}\n", days, inject_anomalies ? "включены" : "выключены");
 
-        // Настройка генератора
         dorm_energy::simulation::GeneratorConfig gen_config;
         gen_config.days = days;
         gen_config.inject_anomalies = inject_anomalies;
+        // gen_config.anomaly_rate     = 0.05; // можно добавить опцию позже
+
+        std::cout << std::format("Дней: {} | Аномалии: {}\n",
+                                 gen_config.days,
+                                 gen_config.inject_anomalies ? "включены" : "выключены");
 
         dorm_energy::simulation::SyntheticDataGenerator generator{gen_config};
         auto data = generator.generate();
 
-        // Детекция аномалий
         dorm_energy::detection::AnomalyDetectorConfig det_config;
         dorm_energy::detection::AnomalyDetector detector{det_config};
 

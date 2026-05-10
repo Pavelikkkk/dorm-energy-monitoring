@@ -37,6 +37,9 @@ add_library(dorm_energy_core STATIC
     src/core/measurement.cpp
     src/detection/anomaly_detector.cpp    
     src/simulation/generator.cpp
+    src/app/application.cpp
+    src/logging/logger.cpp
+    src/mqtt/mqtt_client.cpp
 )
 
 target_include_directories(dorm_energy_core PUBLIC
@@ -47,13 +50,16 @@ target_include_directories(dorm_energy_core PUBLIC
 # Основное приложение
 # ============================================
 
+target_link_libraries(dorm_energy_core 
+ PUBLIC 
+    CLI11::CLI11)
+
 add_executable(dorm-sim
     src/main.cpp
 )
 
 target_link_libraries(dorm-sim 
   PRIVATE
-    dorm_energy_core 
     CLI11::CLI11
 )
 

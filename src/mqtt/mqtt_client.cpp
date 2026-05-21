@@ -2,11 +2,12 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <format>
 
 #include "dorm_energy/mqtt/mqtt_client.hpp"
 #include "dorm_energy/app/message_handler.hpp"
-#include "dorm_energy/interfaces.hpp"
 #include "dorm_energy/simulation/generator.hpp"
+#include "dorm_energy/mqtt/message_parser.hpp" // как он его видит?
 
 namespace dorm_energy::mqtt
 {
@@ -14,11 +15,19 @@ namespace dorm_energy::mqtt
     struct MqttClient::Impl
     {
         std::unique_ptr<IMessageHandler> handler_;
-        std::unique_ptr<std::thread> worker_thread_;
         std::unique_ptr<simulation::SyntheticDataGenerator> generator_;
+        MqttMode mode_ = MqttMode::Simulation;
+
+        // Симуляция
         core::SimulationData simulated_data_;
-        std::atomic<bool> running_{false};
         size_t current_index_{0};
+
+        // Реальный MQTT
+        // mqtt::async_client client_;
+        // mqtt::connect_options conn_opts_;
+
+        std::unique_ptr<std::thread> worker_thread_;
+        std::atomic<bool> running_{false};
         IMqttClient::MessageCallback callback_;
     };
 
@@ -38,14 +47,30 @@ namespace dorm_energy::mqtt
         stop();
     }
 
-    void MqttClient::set_message_callback(dorm_energy::IMqttClient::MessageCallback callback)
+    void MqttClient::set_mode(MqttMode mode)
     {
-        impl_->callback_ = std::move(callback);
+        impl_->mode_ = mode;
+        // TODO: если переключаем на Real — переподключаемся
     }
 
     void MqttClient::set_handler(std::unique_ptr<IMessageHandler> handler)
     {
         impl_->handler_ = std::move(handler);
+    }
+
+    void MqttClient::set_message_callback(MessageCallback callback)
+    {
+        impl_->callback_ = std::move(callback);
+    }
+
+    void MqttClient::connect(const std::string & /*broker*/, const std::string & /*client_id*/)
+    {
+        // TODO: Реализация настоящего подключения
+    }
+
+    void MqttClient::subscribe(const std::string & /*topic*/)
+    {
+        // TODO
     }
 
     void MqttClient::start()
@@ -58,11 +83,22 @@ namespace dorm_energy::mqtt
                                                               {
         while (impl_->running_)
         {
-            if (impl_->current_index_ >= impl_->simulated_data_.size())
-                impl_->current_index_ = 0; 
+            core::PowerMeasurement m;
 
-            core::PowerMeasurement m = impl_->simulated_data_[impl_->current_index_++];
-            m.timestamp = core::Clock::now();
+            if (impl_->mode_ == MqttMode::Simulation)
+            {
+                if (impl_->current_index_ >= impl_->simulated_data_.size())
+                    impl_->current_index_ = 0;
+
+                m = impl_->simulated_data_[impl_->current_index_++];
+                m.timestamp = core::Clock::now();
+            }
+            else
+            {
+                // TODO: Реальный приём из MQTT
+                std::this_thread::sleep_for(std::chrono::seconds(5));
+                continue;
+            }
 
             if (impl_->handler_)
                 impl_->handler_->handle(m);
@@ -82,14 +118,4 @@ namespace dorm_energy::mqtt
             impl_->worker_thread_->join();
     }
 
-    void MqttClient::connect(const std::string &, const std::string &)
-    {
-        // TODO
-    }
-
-    void MqttClient::subscribe(const std::string &)
-    {
-        // TODO
-    }
-
-} // namespace
+} // namespace dorm_energy::mqtt

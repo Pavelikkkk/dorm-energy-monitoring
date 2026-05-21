@@ -7,3 +7,6 @@
 # [submodule "external/paho-mqtt-cpp"]
 # 	path = external/paho-mqtt-cpp
 # 	url = https://github.com/eclipse/paho.mqtt.cpp.git
+[submodule "external/spdlog"]
+	path = external/spdlog
+	url = https://github.com/gabime/spdlog.git

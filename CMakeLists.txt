@@ -28,7 +28,14 @@ message(STATUS "Compiler warnings enabled with -Werror")
 # ============================================
 
 add_subdirectory(external/CLI11)
-add_subdirectory(external/nlohmann_json EXCLUDE_FROM_ALL)
+add_subdirectory(external/spdlog)
+add_subdirectory(external/nlohmann_json EXCLUDE_FROM_ALL) # что значит EXCLUDE_FROM_ALL?
+
+list(APPEND CMAKE_PREFIX_PATH 
+    "D:/programmingThings/vcpkg/installed/x64-windows/share/eclipse-paho-mqtt-c"
+) # костыль
+
+find_package(eclipse-paho-mqtt-c REQUIRED)
 
 # ============================================
 # Основная библиотека проекта
@@ -40,13 +47,13 @@ add_library(dorm_energy_core STATIC # возможно нужно раздели
     src/simulation/generator.cpp
     src/app/application.cpp
     src/app/commands.cpp
-    src/logging/logger.cpp
     src/mqtt/mqtt_client.cpp
     src/mqtt/message_parser.cpp
     src/storage/repository.cpp
     src/app/runtime.cpp
     src/app/message_handler.cpp
     src/app/notifier.cpp
+    include/dorm_energy/infrastructure/logging/spdlog_logger.hpp
 )
 
 target_include_directories(dorm_energy_core PUBLIC
@@ -60,7 +67,9 @@ target_include_directories(dorm_energy_core PUBLIC
 target_link_libraries(dorm_energy_core 
  PUBLIC 
     CLI11::CLI11
-    nlohmann_json::nlohmann_json
+    nlohmann_json::nlohmann_json   
+    eclipse-paho-mqtt-c::paho-mqtt3c
+    eclipse-paho-mqtt-c::paho-mqtt3a
 )
 
 add_executable(dorm-sim

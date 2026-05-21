@@ -4,39 +4,63 @@
 #include <chrono>
 #include <vector>
 #include <string>
+#include <optional>
 
 namespace dorm_energy::core
 {
-
     /**
-     * @brief Измерение потребляемой мощности
+     * @brief Универсальное показание с любого датчика
+     * 
+     * Это основная единица данных всего проекта.
      */
-
-    using Clock = std::chrono::system_clock;
-    using TimePoint = Clock::time_point;
-
-    struct PowerMeasurement
+    struct SensorReading
     {
-        TimePoint timestamp{};
-        int hour_of_day{-1};
-        double power_kw{0.0};
-        bool is_anomaly{false};
+        using TimePoint = std::chrono::system_clock::time_point;
 
-        PowerMeasurement() = default;
+        TimePoint timestamp{};     ///< Время измерения
+        std::string deviceId{};   ///< Идентификатор устройства/датчика
+        std::string sensorType{}; ///< "power", "motion", "light", "temperature" и т.д.
 
-        PowerMeasurement(TimePoint ts, int hour = -1, double power = 0.0, bool anomaly = false)
-            : timestamp{ts}, hour_of_day{hour}, power_kw{power}, is_anomaly{anomaly} {}
+        double value{0.0};                ///< Используется для числовых датчиков (power, temp, lux)
+        std::optional<bool> boolValue{}; ///< Используется для булевых датчиков (motion, door)
+
+        std::string unit{}; ///< "kW", "bool", "lux", "°C" и т.д.
+
+        SensorReading() = default;
+
+        SensorReading(TimePoint ts,
+                      std::string device,
+                      std::string type,
+                      double val = 0.0,
+                      std::string u = "",
+                      std::optional<bool> bval = std::nullopt)
+            : timestamp{ts},
+              deviceId{std::move(device)},
+              sensorType{std::move(type)},
+              value{val}, unit{std::move(u)},
+              boolValue{bval}
+        {
+        }
     };
 
     /**
-     * @brief Тип для хранения последовательности измерений мощности
+     * @brief Основной тип для работы с коллекциями показаний
      */
-    using SimulationData = std::vector<PowerMeasurement>;
+    using ReadingsBatch = std::vector<SensorReading>;
 
     /**
-     * @brief Преобразует PowerMeasurement в удобную строку для вывода
-     * @return строка в формате "YYYY-MM-DD HH:MM | X.XX кВт | аномалия: ДА/нет"
+     * @brief Получить час дня (0-23) из timestamp
      */
-    std::string to_string(const PowerMeasurement &m);
+    int getHourOfDay(const SensorReading &reading); 
+
+    /**
+     * @brief Красивое строковое представление для логов
+     */
+    std::string toString(const SensorReading &reading);
+
+    /**
+     * @brief Преобразование в JSON (для MQTT)
+     */
+    std::string toJson(const SensorReading &reading); 
 
 } // namespace dorm_energy::core

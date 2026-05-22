@@ -1,15 +1,15 @@
 // include/dorm_energy/application/commands/daemon_command.hpp
 #pragma once
 
-#include <memory>
-
-#include "dorm_energy/application/cli/cli_parser.hpp"
+#include "dorm_energy/application/cli/command_options.hpp"
 
 #include "dorm_energy/domain/logging/ilogger.hpp"
 #include "dorm_energy/domain/mqtt/imqtt_connection.hpp"
 #include "dorm_energy/domain/mqtt/imqtt_subscription.hpp"
 #include "dorm_energy/domain/mqtt/imqtt_message_dispatcher.hpp"
 #include "dorm_energy/application/imessage_handler.hpp"
+
+#include <memory>
 
 namespace dorm_energy::application
 {

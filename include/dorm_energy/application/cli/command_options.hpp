@@ -5,9 +5,9 @@
 
 #include <string>
 
-namespace dorm_energy::application::cli
+namespace dorm_energy::cli
 {
-    
+
     /**
      * @brief Общие параметры для всех команд
      */
@@ -27,7 +27,7 @@ namespace dorm_energy::application::cli
 
     struct DaemonOptions
     {
-        std::string mqttBroker{"tcp://127.0.0.1:1883"};
+        std::string mqttBroker{"tcp://127.0.0.1:1883"}; // подумать над дефолтами
         std::string mqttClientId{"dorm-energy"};
         std::string mqttTopic{"devices/+/power"};
     };

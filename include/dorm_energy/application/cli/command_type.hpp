@@ -1,7 +1,7 @@
 // include/dorm_energy/application/cli/command_type.hpp
 #pragma once
 
-namespace dorm_energy::application::cli
+namespace dorm_energy::cli
 {
 
     enum class CommandType
@@ -11,5 +11,5 @@ namespace dorm_energy::application::cli
         Simulate,
         Daemon
     };
-    
+
 }

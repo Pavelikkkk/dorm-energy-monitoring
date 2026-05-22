@@ -1,14 +1,14 @@
 // include/dorm_energy/application/commands/simulate_command.hpp
 #pragma once
 
-#include <memory>
-
-#include "dorm_energy/application/cli/cli_parser.hpp"
+#include "dorm_energy/infrastructure/cli/cli_parser.hpp"
 
 #include "dorm_energy/domain/logging/ilogger.hpp"
 #include "dorm_energy/domain/simulation/idata_generator.hpp"
 #include "dorm_energy/domain/detection/ianomaly_detector.hpp"
 #include "dorm_energy/domain/storage/imeasurement_repository.hpp"
+
+#include <memory>
 
 namespace dorm_energy::application
 {

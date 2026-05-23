@@ -19,6 +19,16 @@ namespace dorm_energy::mqtt
          * @param topic пример: "devices/+/power" или "devices/kitchen/power"
          */
         virtual void subscribe(const std::string &topic = "devices/+/power") = 0;
+
+        /**
+         * @brief Подписаться на несколько топиков
+         */
+        virtual void subscribe(const std::vector<std::string> &topics) = 0;
+
+        /**
+         * @brief Отписаться от топика
+         */
+        virtual void unsubscribe(const std::string &topic) = 0;
     };
 
-} // namespace dorm_energy::domain::mqtt
+} // namespace dorm_energy::mqtt

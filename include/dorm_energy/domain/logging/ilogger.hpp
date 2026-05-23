@@ -37,4 +37,4 @@ namespace dorm_energy::logging
         void critical(const std::string &msg) { log(LogLevel::Critical, msg); }
     };
 
-} // namespace dorm_energy::domain::logging
+} // namespace dorm_energy::logging

@@ -32,4 +32,4 @@ namespace dorm_energy::mqtt
         virtual void setMessageCallback(MessageCallback callback) = 0;
     };
 
-} // namespace dorm_energy::domain::mqtt
+} // namespace dorm_energy::mqtt

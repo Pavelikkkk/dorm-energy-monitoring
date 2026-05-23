@@ -1,28 +1,22 @@
 // include/dorm_energy/infrastructure/simulation/synthetic_data_generator.hpp
 #pragma once
 
+#include "dorm_energy/core/measurement.hpp"
+#include "dorm_energy/domain/simulation/idata_generator.hpp"
+
 #include <random>
 #include <chrono>
 
-#include "dorm_energy/domain/simulation/idata_generator.hpp"
-#include "dorm_energy/core/measurement.hpp"
-
-namespace dorm_energy::infrastructure::simulation
+namespace dorm_energy::simulation
 {
 
-    /**
-     * @brief Реализация генератора синтетических данных
-     *
-     * Генерирует правдоподобные данные потребления энергии для общежития.
-     */
-    class SyntheticDataGenerator : public domain::simulation::IDataGenerator
+    class SyntheticDataGenerator : public dorm_energy::simulation::IDataGenerator
     {
     public:
         explicit SyntheticDataGenerator(unsigned seed = 42, bool inject_anomalies = false);
+        void setSeed(unsigned seed) override;
 
         core::ReadingsBatch generate() const override;
-
-        // Можно генерировать за N дней
         core::ReadingsBatch generate_for_days(int days) const;
 
     private:
@@ -33,4 +27,4 @@ namespace dorm_energy::infrastructure::simulation
         core::SensorReading generate_one_reading(std::chrono::system_clock::time_point ts) const;
     };
 
-} // namespace dorm_energy::infrastructure::simulation
+} // namespace dorm_energy::simulation

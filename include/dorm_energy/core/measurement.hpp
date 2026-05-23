@@ -22,7 +22,7 @@ namespace dorm_energy::core
         std::string sensorType{}; ///< "power", "motion", "light", "temperature" и т.д.
 
         double value{0.0};                ///< Используется для числовых датчиков (power, temp, lux)
-        std::optional<bool> boolValue{}; ///< Используется для булевых датчиков (motion, door)
+        std::optional<bool> boolValue{}; ///< Используется для булевых датчиков (motion)
 
         std::string unit{}; ///< "kW", "bool", "lux", "°C" и т.д.
 
@@ -61,6 +61,6 @@ namespace dorm_energy::core
     /**
      * @brief Преобразование в JSON (для MQTT)
      */
-    std::string toJson(const SensorReading &reading); 
+    std::string toJson(const SensorReading &reading); // возможно вынести
 
 } // namespace dorm_energy::core

@@ -20,6 +20,11 @@ namespace dorm_energy::simulation
          * @return Набор сгенерированных SensorReading
          */
         virtual core::ReadingsBatch generate() const = 0;
+
+        /**
+         * @brief Устанавливает seed для воспроизводимости генерации
+         */
+        virtual void setSeed(unsigned seed) = 0;
     };
 
-} // namespace dorm_energy::domain::simulation
+} // namespace dorm_energy::simulation

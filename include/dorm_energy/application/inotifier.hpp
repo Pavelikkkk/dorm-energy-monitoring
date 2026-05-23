@@ -3,6 +3,7 @@
 
 #include "dorm_energy/core/measurement.hpp"
 #include <string>
+#include <vector>
 
 namespace dorm_energy::application
 {
@@ -25,7 +26,7 @@ namespace dorm_energy::application
          * @param reading аномальное показание
          * @param reason  причина, почему это аномалия (опционально)
          */
-        virtual void sendAlert(const core::SensorReading &reading,
+        virtual bool sendAlert(const core::SensorReading &reading,
                                 const std::string &reason = "") = 0;
 
         /**
@@ -33,7 +34,7 @@ namespace dorm_energy::application
          * @param readings вектор аномальных показаний
          * @param reason  причина, почему это аномалия (опционально)
          */
-        virtual void sendAlerts(const std::vector<core::SensorReading> &readings,
+        virtual std::size_t  sendAlerts(const std::vector<core::SensorReading> &readings,
                                  const std::string &reason = "") = 0;
     };
 

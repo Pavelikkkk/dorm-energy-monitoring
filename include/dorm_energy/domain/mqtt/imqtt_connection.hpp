@@ -25,13 +25,15 @@ namespace dorm_energy::mqtt
 
         /**
          * @brief Подключается к MQTT-брокеру
-         * @param broker   адрес брокера 
+         * @param broker   адрес брокера
          * @param client_id идентификатор клиента
          */
-        virtual void connect(const std::string &broker = "tcp://127.0.0.1:1883",
+        virtual bool connect(const std::string &broker = "tcp://127.0.0.1:1883",
                              const std::string &client_id = "dorm-energy") = 0;
 
-        virtual void start() = 0;
+        virtual bool isConnected() const = 0;
+
+        virtual bool start() = 0;
         virtual void stop() = 0;
 
         /**
@@ -40,4 +42,4 @@ namespace dorm_energy::mqtt
         virtual void setMode(MqttMode mode) = 0;
     };
 
-} // namespace dorm_energy::domain::mqtt
+} // namespace dorm_energy::mqtt

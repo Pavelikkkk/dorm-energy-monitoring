@@ -4,13 +4,10 @@
 #include "dorm_energy/domain/detection/ianomaly_detector.hpp"
 #include "dorm_energy/core/measurement.hpp"
 
-namespace dorm_energy::infrastructure::detection
+namespace dorm_energy::detection
 {
 
-    /**
-     * @brief Простая реализация детектора аномалий на основе пороговых правил
-     */
-    class AnomalyDetector : public domain::detection::IAnomalyDetector
+    class AnomalyDetector : public dorm_energy::detection::IAnomalyDetector
     {
     public:
         explicit AnomalyDetector(double maxPowerKw = 25.0);
@@ -25,4 +22,4 @@ namespace dorm_energy::infrastructure::detection
         double maxPowerKw_;
     };
 
-} // namespace dorm_energy::infrastructure::detection
+} // namespace dorm_energy::detection

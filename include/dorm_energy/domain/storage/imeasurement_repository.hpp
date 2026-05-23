@@ -19,12 +19,12 @@ namespace dorm_energy::storage
         /**
          * @brief Сохраняет одно показание
          */
-        virtual void save(const core::SensorReading &reading) = 0;
+        virtual bool save(const core::SensorReading &reading) = 0;
 
         /**
          * @brief Сохраняет пакет показаний
          */
-        virtual void saveBatch(const core::ReadingsBatch &readings) = 0;
+        virtual std::size_t saveBatch(const core::ReadingsBatch &readings) = 0;
 
         // virtual ReadingsBatch find_by_device(const std::string& device_id, std::size_t limit) const = 0;
         // virtual std::size_t count() const = 0;

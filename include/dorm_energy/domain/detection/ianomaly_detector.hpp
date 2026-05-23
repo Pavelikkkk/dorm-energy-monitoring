@@ -41,4 +41,4 @@ namespace dorm_energy::detection
         virtual int countAnomalies(const core::ReadingsBatch &data) const = 0;
     };
 
-} // namespace dorm_energy::domain::detection
+} // namespace dorm_energy::detection

@@ -15,7 +15,7 @@ namespace dorm_energy::handlers
     public:
         explicit MessageHandler(
             std::unique_ptr<dorm_energy::detection::IAnomalyDetector> detector,
-            std::unique_ptr<dorm_energy::storage::IMeasurementRepository> repository,
+            std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository,
             std::unique_ptr<dorm_energy::application::INotifier> notifier);
 
         bool handle(const core::SensorReading &reading) override;
@@ -26,10 +26,10 @@ namespace dorm_energy::handlers
 
     private:
         std::unique_ptr<dorm_energy::detection::IAnomalyDetector> detector_;
-        std::unique_ptr<dorm_energy::storage::IMeasurementRepository> repository_;
+        std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository_;
         std::unique_ptr<dorm_energy::application::INotifier> notifier_;
 
-        // Можно добавить накопление батча для производительности
+        void persistCurrentBatch();
         core::ReadingsBatch batch_;
     };
 

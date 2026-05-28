@@ -1,58 +1,64 @@
-// src/detection/anomaly_detector.cpp
-#include <format>
-#include <iostream>
+// src/dorm_energy/detection/anomaly_detector.cpp
+#include "dorm_energy/infrastructure/detection/anomaly_detector.hpp"
+#include "dorm_energy/core/measurement.hpp"
 
-#include "dorm_energy/detection/anomaly_detector.hpp"
+#include <vector>
+#include <algorithm>
 
 namespace dorm_energy::detection
 {
 
-    AnomalyDetector::AnomalyDetector(AnomalyDetectorConfig config)
-        : config_(std::move(config))
+    AnomalyDetector::AnomalyDetector(double maxPowerKw)
+        : maxPowerKw_(maxPowerKw)
     {
+        if (maxPowerKw_ <= 0.0)
+        {
+            maxPowerKw_ = 25.0;
+        }
     }
 
-    int AnomalyDetector::detect(core::SimulationData &data) const
+    bool AnomalyDetector::isAnomaly(const core::SensorReading &reading) const
     {
-        int anomaly_count{0};
+        // В будущем более сложная логика (ML)
 
-        for (auto &m : data)
+        if (reading.sensorType == "power" || reading.sensorType == "Power")
         {
-            if (isAnomaly(m))
-            {
-                m.is_anomaly = true;
-                anomaly_count++;
-            }
+            return reading.value > maxPowerKw_;
         }
 
-        return anomaly_count;
+        return false;
     }
 
-    std::vector<core::PowerMeasurement>
-    AnomalyDetector::get_anomalies(const core::SimulationData &data) const
+    std::vector<core::SensorReading> AnomalyDetector::getAnomalies(
+        const core::ReadingsBatch &data) const
     {
-        std::vector<core::PowerMeasurement> anomalies;
-        anomalies.reserve(data.size() / 10); // убрать маг значние
+        std::vector<core::SensorReading> anomalies;
+        anomalies.reserve(data.size());
 
-        for (const auto &m : data)
+        for (const auto &reading : data)
         {
-            if (m.is_anomaly)
-                anomalies.push_back(m);
+            if (isAnomaly(reading))
+            {
+                anomalies.push_back(reading);
+            }
         }
 
         return anomalies;
     }
 
-    bool AnomalyDetector::isAnomaly(const core::PowerMeasurement &m) const
+    int AnomalyDetector::countAnomalies(const core::ReadingsBatch &data) const
     {
-        if (m.power_kw > config_.high_power_threshold)
-            return true;
+        int count{0};
 
-        if (m.power_kw < AnomalyDetectorConfig::night_low_threshold &&
-            m.hour_of_day >= 0 && m.hour_of_day <= 6)
-            return true;
+        for (const auto &reading : data)
+        {
+            if (isAnomaly(reading))
+            {
+                ++count;
+            }
+        }
 
-        return false;
+        return count;
     }
 
 } // namespace dorm_energy::detection

@@ -4,10 +4,14 @@
 #include "dorm_energy/core/measurement.hpp"
 #include "dorm_energy/domain/storage/imeasurement_repository.hpp"
 
+#include <pqxx/pqxx>
+#include <memory>
+#include <string>
+
 namespace dorm_energy::storage
 {
 
-    class PostgresMeasurementRepository : public dorm_energy::storage::IMeasurementRepository
+    class PostgresMeasurementRepository : public IMeasurementRepository
     {
     public:
         explicit PostgresMeasurementRepository(const std::string &connectionString);
@@ -15,18 +19,13 @@ namespace dorm_energy::storage
         ~PostgresMeasurementRepository() override;
 
         bool save(const core::SensorReading &reading) override;
-
         std::size_t saveBatch(const core::ReadingsBatch &readings) override;
-
-        // Позже:
-        // core::ReadingsBatch findByDevice(const std::string& deviceId, std::size_t limit) const;
-        // std::size_t count() const;
 
     private:
         std::string connectionString_;
+        std::unique_ptr<pqxx::connection> connection_;
 
-        // std::unique_ptr<pqxx::connection> connection_;                                                                                   // для начала
-        // std::shared_ptr<pqxx::connection_pool> pool_;
+        void connect();
     };
 
 } // namespace dorm_energy::storage

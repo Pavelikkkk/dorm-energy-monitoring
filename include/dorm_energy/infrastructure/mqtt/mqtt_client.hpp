@@ -21,12 +21,17 @@ namespace dorm_energy::mqtt
         bool connect(const std::string &broker = "tcp://127.0.0.1:1883",
                      const std::string &clientId = "dorm-energy") override;
 
+        bool isConnected() const override;
+
         bool start() override;
         void stop() override;
         void setMode(dorm_energy::mqtt::MqttMode mode) override;
 
-        void subscribe(const std::string &topic = "devices/+/power") override;
-        
+        void subscribe(const std::string &topic) override;
+        void subscribe(const std::vector<std::string> &topics) override;
+
+        void unsubscribe(const std::string &topic) override;
+
         void setHandler(std::unique_ptr<application::IMessageHandler> handler) override;
 
         using MessageCallback = dorm_energy::mqtt::IMqttMessageDispatcher::MessageCallback;

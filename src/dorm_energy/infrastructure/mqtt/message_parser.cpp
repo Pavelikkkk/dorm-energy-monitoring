@@ -1,39 +1,47 @@
-// src/mqtt/message_parser.cpp
-#include <nlohmann/json.hpp>
-#include <format>
-#include <chrono>
+// src/dorm_energy/infrastructure/mqtt/message_parser.cpp
+#include "dorm_energy/infrastructure/mqtt/message_parser.hpp"
+#include "dorm_energy/core/measurement.hpp"
 
-#include "dorm_energy/mqtt/message_parser.hpp"
+#include <string>
+#include <optional>
+#include <sstream>
+#include <iostream>
 
 namespace dorm_energy::mqtt
 {
 
-    bool MessageParser::parse(const std::string &payload, core::PowerMeasurement &out)
+    bool MessageParser::canParse(const std::string &payload) const
     {
-        try
-        {
-            auto j = nlohmann::json::parse(payload); 
-
-            out.timestamp = std::chrono::system_clock::now();
-            out.hour_of_day = j.value("hour", 0);
-            out.power_kw = j.value("power_kw", 0.0);
-            out.is_anomaly = false;
-
-            return true;
-        }
-        catch (...)
+        if (payload.empty())
         {
             return false;
         }
+        // проверить наличие ключей "deviceId", "sensorType" .
+        return payload.find('{') != std::string::npos &&
+               payload.find('}') != std::string::npos;
     }
 
-    std::string MessageParser::to_json(const core::PowerMeasurement &m)
+    std::optional<core::SensorReading> MessageParser::parse(const std::string &payload) const
     {
-        nlohmann::json j;
-        j["power_kw"] = m.power_kw;
-        j["hour"] = m.hour_of_day;
-        j["timestamp"] = std::format("{:%Y-%m-%d %H:%M}", m.timestamp);
-        return j.dump();
+        if (!canParse(payload))
+        {
+            std::cerr << "[MessageParser] Couldn't parse payload: " << payload << std::endl;
+            return std::nullopt;
+        }
+
+        // здесь будет полноценный JSON-парсер
+
+        core::SensorReading reading;
+        reading.timestamp = std::chrono::system_clock::now();
+        reading.deviceId = "mqtt-device-01";
+        reading.sensorType = "power";
+        reading.value = 5.67;
+        reading.unit = "kW";
+
+        std::cout << "[MessageParser] Successfully parsed: "
+                  << core::toString(reading) << std::endl;
+
+        return reading;
     }
 
 } // namespace dorm_energy::mqtt

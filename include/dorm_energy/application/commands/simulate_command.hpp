@@ -20,10 +20,10 @@ namespace dorm_energy::application
     {
     public:
         explicit SimulateCommand(
-            std::unique_ptr<domain::logging::ILogger> logger,
-            std::unique_ptr<domain::simulation::IDataGenerator> generator,
-            std::unique_ptr<domain::detection::IAnomalyDetector> detector,
-            std::unique_ptr<domain::storage::IMeasurementRepository> repository);
+            std::shared_ptr<dorm_energy::logging::ILogger> logger,
+            std::unique_ptr<dorm_energy::simulation::IDataGenerator> generator,
+            std::unique_ptr<dorm_energy::detection::IAnomalyDetector> detector,
+            std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository);
 
         /**
          * @brief Выполняет симуляцию
@@ -33,10 +33,10 @@ namespace dorm_energy::application
         int execute(const cli::CommandOptions &options);
 
     private:
-        std::unique_ptr<domain::logging::ILogger> logger_;
-        std::unique_ptr<domain::simulation::IDataGenerator> generator_;
-        std::unique_ptr<domain::detection::IAnomalyDetector> detector_;
-        std::unique_ptr<domain::storage::IMeasurementRepository> repository_;
+        std::shared_ptr<dorm_energy::logging::ILogger> logger_;
+        std::unique_ptr<dorm_energy::simulation::IDataGenerator> generator_;
+        std::unique_ptr<dorm_energy::detection::IAnomalyDetector> detector_;
+        std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository_;
     };
 
 } // namespace dorm_energy::application

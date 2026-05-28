@@ -21,6 +21,8 @@ namespace dorm_energy::simulation
          */
         virtual core::ReadingsBatch generate() const = 0;
 
+        virtual core::ReadingsBatch generate_for_days(int days) const = 0;
+
         /**
          * @brief Устанавливает seed для воспроизводимости генерации
          */

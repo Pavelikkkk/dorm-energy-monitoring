@@ -1,39 +1,69 @@
-// src/infrastructure/logging/spdlog_logger.cpp
+// src/dorm_energy/logging/spdlog_logger.cpp
 #include "dorm_energy/infrastructure/logging/spdlog_logger.hpp"
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include "dorm_energy/application/config/app_config.hpp"
 
-namespace dorm_energy::infrastructure::logging
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/common.h>
+
+namespace dorm_energy::logging
 {
 
-    SpdlogLogger::SpdlogLogger(const std::string &name)
-    {
-        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        logger_ = std::make_shared<spdlog::logger>(name, console_sink);
-
-        logger_->set_level(spdlog::level::debug);       
-        logger_->set_pattern("[%H:%M:%S] [%^%l%$] %v"); 
-    }
-
-    void SpdlogLogger::log(domain::logging::LogLevel level, const std::string &message)
+    spdlog::level::level_enum SpdlogLogger::toSpdlogLevel(LogLevel level)
     {
         switch (level)
         {
-        case domain::logging::LogLevel::Debug:
-            logger_->debug(message);
-            break;
-        case domain::logging::LogLevel::Info:
-            logger_->info(message);
-            break;
-        case domain::logging::LogLevel::Warn:
-            logger_->warn(message);
-            break;
-        case domain::logging::LogLevel::Error:
-            logger_->error(message);
-            break;
-        case domain::logging::LogLevel::Critical:
-            logger_->critical(message);
-            break;
+        case LogLevel::Debug:
+            return spdlog::level::debug;
+        case LogLevel::Info:
+            return spdlog::level::info;
+        case LogLevel::Warn:
+            return spdlog::level::warn;
+        case LogLevel::Error:
+            return spdlog::level::err;
+        case LogLevel::Critical:
+            return spdlog::level::critical;
+        default:
+            return spdlog::level::info;
         }
     }
 
-} // namespace dorm_energy::infrastructure::logging
+    SpdlogLogger::SpdlogLogger(const std::string &name)
+        : logger_(spdlog::stdout_color_mt(name))
+    {
+        logger_->set_level(spdlog::level::info);
+        logger_->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] %v");
+    }
+
+    SpdlogLogger::SpdlogLogger(const application::AppConfig &config,
+                               const std::string &name)
+        : logger_(spdlog::stdout_color_mt(name))
+    {
+        spdlog::level::level_enum spdLevel = spdlog::level::info;
+
+        if (config.logLevel == "debug")
+            spdLevel = spdlog::level::debug;
+        else if (config.logLevel == "info")
+            spdLevel = spdlog::level::info;
+        else if (config.logLevel == "warn")
+            spdLevel = spdlog::level::warn;
+        else if (config.logLevel == "error")
+            spdLevel = spdlog::level::err;
+        else if (config.logLevel == "critical")
+            spdLevel = spdlog::level::critical;
+
+        logger_->set_level(spdLevel);
+        logger_->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] %v");
+
+        if (config.verbose)
+        {
+            logger_->info("SpdlogLogger initialized in verbose mode");
+        }
+    }
+
+    void SpdlogLogger::log(LogLevel level, const std::string &message)
+    {
+        logger_->log(toSpdlogLevel(level), message);
+    }
+
+} // namespace dorm_energy::logging

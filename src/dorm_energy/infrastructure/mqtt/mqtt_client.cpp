@@ -1,45 +1,18 @@
-// src/mqtt/mqtt_client.cpp
+// src/dorm_energy/infrastructure/mqtt/mqtt_client.cpp
+#include "dorm_energy/infrastructure/mqtt/mqtt_client.hpp"
+#include "dorm_energy/core/measurement.hpp"
+#include "dorm_energy/infrastructure/mqtt/message_parser.hpp"
+
+#include <iostream>
 #include <thread>
 #include <chrono>
-#include <atomic>
-#include <format>
-
-#include "dorm_energy/mqtt/mqtt_client.hpp"
-#include "dorm_energy/app/message_handler.hpp"
-#include "dorm_energy/simulation/generator.hpp"
-#include "dorm_energy/mqtt/message_parser.hpp" // как он его видит?
 
 namespace dorm_energy::mqtt
 {
 
-    struct MqttClient::Impl
+    MqttClient::MqttClient()
     {
-        std::unique_ptr<IMessageHandler> handler_;
-        std::unique_ptr<simulation::SyntheticDataGenerator> generator_;
-        MqttMode mode_ = MqttMode::Simulation;
-
-        // Симуляция
-        core::SimulationData simulated_data_;
-        size_t current_index_{0};
-
-        // Реальный MQTT
-        // mqtt::async_client client_;
-        // mqtt::connect_options conn_opts_;
-
-        std::unique_ptr<std::thread> worker_thread_;
-        std::atomic<bool> running_{false};
-        IMqttClient::MessageCallback callback_;
-    };
-
-    MqttClient::MqttClient(std::unique_ptr<simulation::SyntheticDataGenerator> generator)
-        : impl_(std::make_unique<Impl>())
-    {
-        if (generator)
-            impl_->generator_ = std::move(generator);
-        else
-            impl_->generator_ = std::make_unique<simulation::SyntheticDataGenerator>();
-
-        impl_->simulated_data_ = impl_->generator_->generate();
+        // paho.mqtt будет позже
     }
 
     MqttClient::~MqttClient()
@@ -47,75 +20,75 @@ namespace dorm_energy::mqtt
         stop();
     }
 
-    void MqttClient::set_mode(MqttMode mode)
+    bool MqttClient::connect(const std::string &broker, const std::string &clientId)
     {
-        impl_->mode_ = mode;
-        // TODO: если переключаем на Real — переподключаемся
+        std::cout << "[MqttClient] Connected to " << broker
+                  << " (clientId: " << clientId << ")... [SIMULATION MODE]" << std::endl;
+
+        isConnected_ = true;
+        return true;
     }
 
-    void MqttClient::set_handler(std::unique_ptr<IMessageHandler> handler)
+    bool MqttClient::isConnected() const
     {
-        impl_->handler_ = std::move(handler);
+        return isConnected_;
     }
 
-    void MqttClient::set_message_callback(MessageCallback callback)
+    bool MqttClient::start()
     {
-        impl_->callback_ = std::move(callback);
-    }
-
-    void MqttClient::connect(const std::string & /*broker*/, const std::string & /*client_id*/)
-    {
-        // TODO: Реализация настоящего подключения
-    }
-
-    void MqttClient::subscribe(const std::string & /*topic*/)
-    {
-        // TODO
-    }
-
-    void MqttClient::start()
-    {
-        if (impl_->running_)
-            return;
-
-        impl_->running_ = true;
-        impl_->worker_thread_ = std::make_unique<std::thread>([this]()
-                                                              {
-        while (impl_->running_)
+        if (!isConnected_)
         {
-            core::PowerMeasurement m;
-
-            if (impl_->mode_ == MqttMode::Simulation)
-            {
-                if (impl_->current_index_ >= impl_->simulated_data_.size())
-                    impl_->current_index_ = 0;
-
-                m = impl_->simulated_data_[impl_->current_index_++];
-                m.timestamp = core::Clock::now();
-            }
-            else
-            {
-                // TODO: Реальный приём из MQTT
-                std::this_thread::sleep_for(std::chrono::seconds(5));
-                continue;
-            }
-
-            if (impl_->handler_)
-                impl_->handler_->handle(m);
-            else if (impl_->callback_)
-                impl_->callback_(m);
-
-            std::this_thread::sleep_for(std::chrono::seconds(3));
-        } });
+            return false;
+        }
+        std::cout << "[MqttClient] MQTT the client is running in the mode "
+                  << (currentMode_ == MqttMode::Simulation ? "SIMULATION" : "REAL") << std::endl;
+        return true;
     }
 
     void MqttClient::stop()
     {
-        if (!impl_->running_)
-            return;
-        impl_->running_ = false;
-        if (impl_->worker_thread_ && impl_->worker_thread_->joinable())
-            impl_->worker_thread_->join();
+        if (isConnected_)
+        {
+            std::cout << "[MqttClient] Stopping the client's MQTT..." << std::endl;
+            isConnected_ = false;
+        }
+    }
+
+    void MqttClient::setMode(MqttMode mode)
+    {
+        currentMode_ = mode;
+        std::cout << "[MqttClient] The operating mode has been changed to: "
+                  << (mode == MqttMode::Simulation ? "SIMULATION" : "REAL") << std::endl;
+    }
+
+    void MqttClient::subscribe(const std::string &topic)
+    {
+        std::cout << "[MqttClient] Subscribe to a topic: " << topic << std::endl;
+    }
+
+    void MqttClient::subscribe(const std::vector<std::string> &topics)
+    {
+        std::cout << "[MqttClient] Subscribe to " << topics.size() << " topics" << std::endl;
+        for (const auto &t : topics)
+        {
+            subscribe(t);
+        }
+    }
+
+    void MqttClient::unsubscribe(const std::string &topic)
+    {
+        std::cout << "[MqttClient] Unsubscribe from " << topic << std::endl;
+    }
+
+    void MqttClient::setHandler(std::unique_ptr<application::IMessageHandler> handler)
+    {
+        handler_ = std::move(handler);
+        std::cout << "[MqttClient] The message handler is installed" << std::endl;
+    }
+
+    void MqttClient::setMessageCallback(MessageCallback callback)
+    {
+        messageCallback_ = std::move(callback);
     }
 
 } // namespace dorm_energy::mqtt

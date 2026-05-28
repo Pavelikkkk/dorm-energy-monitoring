@@ -18,7 +18,8 @@ namespace dorm_energy::application
             AppConfig config,
             std::unique_ptr<cli::CliParser> cliParser,
             std::unique_ptr<SimulateCommand> simulateCommand,
-            std::unique_ptr<DaemonCommand> daemonCommand);
+            std::unique_ptr<DaemonCommand> daemonCommand,
+            std::shared_ptr<storage::IMeasurementRepository> repository);
 
         ~Application() = default;
 
@@ -30,6 +31,7 @@ namespace dorm_energy::application
         std::unique_ptr<cli::CliParser> cliParser_;
         std::unique_ptr<SimulateCommand> simulateCommand_;
         std::unique_ptr<DaemonCommand> daemonCommand_;
+        std::shared_ptr<storage::IMeasurementRepository> repository_;
     };
 
 } // namespace dorm_energy::application

@@ -34,7 +34,9 @@ namespace dorm_energy::application
         // Уведомления
         std::string notifierType{"console"};
 
+        static AppConfig load();
         static AppConfig loadFromEnvironment();
+        static AppConfig loadFromEnvFile(const std::string &filename = ".env");
 
         /**
          * @brief Применяет параметры из командной строки (перезапись)

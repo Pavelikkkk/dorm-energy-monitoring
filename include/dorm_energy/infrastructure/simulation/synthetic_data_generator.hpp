@@ -17,7 +17,7 @@ namespace dorm_energy::simulation
         void setSeed(unsigned seed) override;
 
         core::ReadingsBatch generate() const override;
-        core::ReadingsBatch generate_for_days(int days) const;
+        core::ReadingsBatch generate_for_days(int days) const override;
 
     private:
         mutable std::mt19937 rng_;

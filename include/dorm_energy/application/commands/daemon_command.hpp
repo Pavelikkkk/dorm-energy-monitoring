@@ -21,19 +21,23 @@ namespace dorm_energy::application
     {
     public:
         explicit DaemonCommand(
-            std::unique_ptr<domain::logging::ILogger> logger,
-            std::unique_ptr<domain::mqtt::IMqttConnection> mqtt_connection,
-            std::unique_ptr<domain::mqtt::IMqttSubscription> mqtt_subscription,
-            std::unique_ptr<domain::mqtt::IMqttMessageDispatcher> mqtt_dispatcher,
+            std::shared_ptr<dorm_energy::logging::ILogger> logger,
+
+            std::shared_ptr<dorm_energy::mqtt::IMqttConnection> mqtt_connection,
+            std::shared_ptr<dorm_energy::mqtt::IMqttSubscription> mqtt_subscription,
+            std::shared_ptr<dorm_energy::mqtt::IMqttMessageDispatcher> mqtt_dispatcher,
+
             std::unique_ptr<application::IMessageHandler> message_handler);
 
         int execute(const cli::CommandOptions &options);
 
     private:
-        std::unique_ptr<domain::logging::ILogger> logger_;
-        std::unique_ptr<domain::mqtt::IMqttConnection> mqtt_connection_;
-        std::unique_ptr<domain::mqtt::IMqttSubscription> mqtt_subscription_;
-        std::unique_ptr<domain::mqtt::IMqttMessageDispatcher> mqtt_dispatcher_;
+        std::shared_ptr<dorm_energy::logging::ILogger> logger_;
+
+        std::shared_ptr<dorm_energy::mqtt::IMqttConnection> mqtt_connection_;
+        std::shared_ptr<dorm_energy::mqtt::IMqttSubscription> mqtt_subscription_;
+        std::shared_ptr<dorm_energy::mqtt::IMqttMessageDispatcher> mqtt_dispatcher_;
+
         std::unique_ptr<application::IMessageHandler> message_handler_;
     };
 

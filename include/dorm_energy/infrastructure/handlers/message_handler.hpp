@@ -6,6 +6,7 @@
 #include "dorm_energy/application/inotifier.hpp"
 #include "dorm_energy/application/imessage_handler.hpp"
 #include "dorm_energy/core/measurement.hpp"
+#include "dorm_energy/infrastructure/detection/anomaly_detector.hpp"
 
 namespace dorm_energy::handlers
 {
@@ -19,7 +20,6 @@ namespace dorm_energy::handlers
             std::unique_ptr<dorm_energy::application::INotifier> notifier);
 
         bool handle(const core::SensorReading &reading) override;
-
         std::size_t handleBatch(const std::vector<core::SensorReading> &readings) override;
 
         void flush() override;
@@ -30,6 +30,8 @@ namespace dorm_energy::handlers
         std::unique_ptr<dorm_energy::application::INotifier> notifier_;
 
         void persistCurrentBatch();
+        void processAnomaly(const core::SensorReading &reading);
+
         core::ReadingsBatch batch_;
     };
 

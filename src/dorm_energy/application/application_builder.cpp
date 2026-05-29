@@ -37,7 +37,9 @@ namespace dorm_energy::application
     std::unique_ptr<simulation::IDataGenerator> ApplicationBuilder::createGenerator()
     {
         return std::make_unique<simulation::SyntheticDataGenerator>(
-            config_.randomSeed, config_.injectAnomalies);
+            config_.getRandomSeed(),
+            config_.getInjectAnomalies(),
+            config_.getAnomalyRate());
     }
 
     std::unique_ptr<detection::IAnomalyDetector> ApplicationBuilder::createDetector()
@@ -55,12 +57,15 @@ namespace dorm_energy::application
             std::string connStr = config_.getDbConnectionString();
 
             std::cout << "[Builder] Connecting to TimescaleDB: "
-                      << config_.dbHost << ":" << config_.dbPort
-                      << "/" << config_.dbName << std::endl;
+                      << config_.getDbHost() << ":" << config_.getDbPort()
+                      << "/" << config_.getDbName() << std::endl;
 
-            repository_ = std::make_shared<storage::PostgresMeasurementRepository>(connStr);
+            repository_ = std::make_shared<storage::PostgresMeasurementRepository>(
+                connStr,
+                config_.getDbMaxBufferSize());
 
-            std::cout << "[Builder] PostgresMeasurementRepository created successfully\n";
+            std::cout << "[Builder] PostgresMeasurementRepository created successfully (buffer = "
+                      << config_.getDbMaxBufferSize() << ")\n";
             return repository_;
         }
         catch (const std::exception &e)
@@ -95,6 +100,7 @@ namespace dorm_energy::application
 
         return sharedClient;
     }
+
     std::shared_ptr<mqtt::IMqttConnection> ApplicationBuilder::createMqttConnection()
     {
         return createSharedMqttClient();
@@ -136,7 +142,7 @@ namespace dorm_energy::application
 
     std::unique_ptr<Application> ApplicationBuilder::build()
     {
-        config_ = AppConfig::load(); 
+        config_ = AppConfig::load();
 
         repository_ = createRepository();
 
@@ -149,7 +155,7 @@ namespace dorm_energy::application
             std::move(cliParser),
             std::move(simulateCmd),
             std::move(daemonCmd),
-            repository_); 
+            repository_);
     }
 
 } // namespace dorm_energy::application

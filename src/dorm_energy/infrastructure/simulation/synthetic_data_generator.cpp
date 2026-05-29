@@ -6,11 +6,18 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <unordered_set>
 
 namespace dorm_energy::simulation
 {
-    SyntheticDataGenerator::SyntheticDataGenerator(unsigned seed, bool inject_anomalies)
-        : rng_(seed), inject_anomalies_(inject_anomalies)
+
+    SyntheticDataGenerator::SyntheticDataGenerator::SyntheticDataGenerator(
+        unsigned seed,
+        bool inject_anomalies,
+        double anomaly_rate)
+        : rng_(seed), 
+        inject_anomalies_(inject_anomalies), 
+        anomaly_rate_(anomaly_rate)
     {
     }
 
@@ -20,20 +27,29 @@ namespace dorm_energy::simulation
     }
 
     core::SensorReading SyntheticDataGenerator::generate_one_reading(
-        std::chrono::system_clock::time_point ts) const
+        std::chrono::system_clock::time_point base_time,
+        int reading_index) const
     {
         static const std::vector<std::string> devices = {
             "kitchen", "bedroom-1", "bedroom-2", "living-room", "bathroom", "corridor"};
 
-        std::uniform_int_distribution<std::size_t> deviceDist(0, devices.size() - 1);
-        std::string deviceId = devices[deviceDist(rng_)];
+        static const std::vector<std::string> sensorTypes = {
+            "power", "motion", "temperature", "light"};
 
-        static const std::vector<std::string> sensorTypes = {"power", "motion", "temperature", "light"};
+        std::uniform_int_distribution<std::size_t> deviceDist(0, devices.size() - 1);
         std::uniform_int_distribution<std::size_t> typeDist(0, sensorTypes.size() - 1);
+
+        std::string deviceId = devices[deviceDist(rng_)];
         std::string sensorType = sensorTypes[typeDist(rng_)];
 
+        auto ms = std::chrono::milliseconds(
+            (reading_index * 137) % 900 +
+            std::uniform_int_distribution<int>(0, 99)(rng_));
+
+        auto finalTime = base_time + ms;
+
         core::SensorReading reading;
-        reading.timestamp = ts;
+        reading.timestamp = finalTime;
         reading.deviceId = deviceId;
         reading.sensorType = sensorType;
 
@@ -43,7 +59,8 @@ namespace dorm_energy::simulation
             reading.value = powerDist(rng_);
             reading.unit = "kW";
 
-            if (inject_anomalies_ && std::uniform_real_distribution<double>(0.0, 1.0)(rng_) < anomaly_rate_)
+            if (inject_anomalies_ &&
+                std::uniform_real_distribution<double>(0.0, 1.0)(rng_) < anomaly_rate_)
             {
                 reading.value = 25.0 + std::uniform_real_distribution<double>(5.0, 30.0)(rng_);
             }
@@ -78,18 +95,17 @@ namespace dorm_energy::simulation
     core::ReadingsBatch SyntheticDataGenerator::generate_for_days(int days) const
     {
         if (days <= 0)
-        {
             days = 1;
-        }
 
         core::ReadingsBatch batch;
-
-        batch.reserve(static_cast<std::size_t>(days) * 24 * 15);
+        batch.reserve(static_cast<std::size_t>(days) * 24 * 12);
 
         auto now = std::chrono::system_clock::now();
         auto currentTime = now - std::chrono::hours(24 * days);
 
         std::uniform_int_distribution<int> readingsPerHour(8, 15);
+
+        int globalIndex = 0;
 
         for (int day = 0; day < days; ++day)
         {
@@ -99,11 +115,12 @@ namespace dorm_energy::simulation
 
                 for (int i = 0; i < readingsCount; ++i)
                 {
-                    auto offset = std::chrono::minutes(
+                    auto minuteOffset = std::chrono::minutes(
                         std::uniform_int_distribution<int>(0, 59)(rng_));
-                    auto ts = currentTime + std::chrono::hours(hour) + offset;
 
-                    batch.push_back(generate_one_reading(ts));
+                    auto baseTs = currentTime + std::chrono::hours(hour) + minuteOffset;
+
+                    batch.push_back(generate_one_reading(baseTs, globalIndex++));
                 }
             }
             currentTime += std::chrono::hours(24);

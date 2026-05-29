@@ -41,21 +41,23 @@ namespace dorm_energy::logging
     {
         spdlog::level::level_enum spdLevel = spdlog::level::info;
 
-        if (config.logLevel == "debug")
+        const std::string &levelStr = config.getLogLevel();
+
+        if (levelStr == "debug")
             spdLevel = spdlog::level::debug;
-        else if (config.logLevel == "info")
+        else if (levelStr == "info")
             spdLevel = spdlog::level::info;
-        else if (config.logLevel == "warn")
+        else if (levelStr == "warn")
             spdLevel = spdlog::level::warn;
-        else if (config.logLevel == "error")
+        else if (levelStr == "error")
             spdLevel = spdlog::level::err;
-        else if (config.logLevel == "critical")
+        else if (levelStr == "critical")
             spdLevel = spdlog::level::critical;
 
         logger_->set_level(spdLevel);
         logger_->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] %v");
 
-        if (config.verbose)
+        if (config.isVerbose())
         {
             logger_->info("SpdlogLogger initialized in verbose mode");
         }

@@ -1,31 +1,49 @@
 // include/dorm_energy/infrastructure/storage/postgres_repository.hpp
 #pragma once
 
-#include "dorm_energy/core/measurement.hpp"
 #include "dorm_energy/domain/storage/imeasurement_repository.hpp"
+#include "dorm_energy/core/measurement.hpp"
 
 #include <pqxx/pqxx>
 #include <memory>
 #include <string>
+#include <vector>
+#include <mutex>
+#include <chrono>
 
 namespace dorm_energy::storage
 {
-
     class PostgresMeasurementRepository : public IMeasurementRepository
     {
     public:
-        explicit PostgresMeasurementRepository(const std::string &connectionString);
+        explicit PostgresMeasurementRepository(
+            const std::string &connectionString,
+            std::size_t maxBufferSize = 2000);
 
         ~PostgresMeasurementRepository() override;
 
         bool save(const core::SensorReading &reading) override;
         std::size_t saveBatch(const core::ReadingsBatch &readings) override;
 
+        bool saveAnomaly(const core::SensorReading &reading,
+                         const std::string &anomalyType,
+                         const std::string &severity,
+                         const std::string &description) override;
+
+        void flush() override;
+
     private:
+        void connect();
+        bool tryReconnect(int maxAttempts = 3);
+
+        void doFlush(const std::vector<core::SensorReading> &readings);
+
         std::string connectionString_;
         std::unique_ptr<pqxx::connection> connection_;
 
-        void connect();
-    };
+        std::vector<core::SensorReading> buffer_;
+        const std::size_t maxBufferSize_;
 
+        std::mutex bufferMutex_; // thread-safety для будущего MQTT
+    };
 } // namespace dorm_energy::storage

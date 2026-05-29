@@ -1,31 +1,30 @@
 // src/dorm_energy/infrastructure/storage/postgres_repository.cpp
 #include "dorm_energy/infrastructure/storage/postgres_repository.hpp"
+
 #include <fmt/format.h>
 #include <fmt/chrono.h>
 #include <iostream>
-#include <pqxx/params> // современный API libpqxx
+#include <pqxx/params>
+#include <thread>
+#include <chrono>
 
 namespace dorm_energy::storage
 {
 
     PostgresMeasurementRepository::PostgresMeasurementRepository(
-        const std::string &connectionString)
-        : connectionString_(connectionString)
+        const std::string &connectionString,
+        std::size_t maxBufferSize)
+        : connectionString_(connectionString),
+          maxBufferSize_(maxBufferSize)
     {
-        try
-        {
-            connect();
-            std::cout << "[PostgresRepository] Successfully connected to TimescaleDB\n";
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "[PostgresRepository] Connection error: " << e.what() << std::endl;
-            throw;
-        }
+        connect();
+        std::cout << "[PostgresRepository] Successfully connected to TimescaleDB (buffer size = "
+                  << maxBufferSize << ")\n";
     }
 
     PostgresMeasurementRepository::~PostgresMeasurementRepository()
     {
+        flush();
         if (connection_ && connection_->is_open())
         {
             std::cout << "[PostgresRepository] Database connection closed\n";
@@ -36,62 +35,36 @@ namespace dorm_energy::storage
     {
         connection_ = std::make_unique<pqxx::connection>(connectionString_);
         if (!connection_->is_open())
+            throw std::runtime_error("Failed to open connection to TimescaleDB");
+    }
+
+    bool PostgresMeasurementRepository::tryReconnect(int maxAttempts)
+    {
+        for (int attempt = 1; attempt <= maxAttempts; ++attempt)
         {
-            throw std::runtime_error("Failed to open connection to PostgreSQL");
+            try
+            {
+                std::cout << "[PostgresRepository] Reconnect attempt " << attempt << "/" << maxAttempts << "...\n";
+                connect();
+                std::cout << "[PostgresRepository] Reconnected successfully\n";
+                return true;
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "[PostgresRepository] Reconnect failed: " << e.what() << std::endl;
+                if (attempt < maxAttempts)
+                {
+                    auto backoff = std::chrono::seconds(1 << (attempt - 1));
+                    std::this_thread::sleep_for(backoff);
+                }
+            }
         }
+        return false;
     }
 
     bool PostgresMeasurementRepository::save(const core::SensorReading &reading)
     {
-        try
-        {
-            pqxx::work txn{*connection_};
-
-            std::string recorded_at_str = fmt::format("{:%Y-%m-%d %H:%M:%S}", reading.timestamp);
-
-            if (reading.boolValue.has_value())
-            {
-                txn.exec(
-                    R"(
-                    INSERT INTO sensor_readings 
-                        (recorded_at, device_id, sensor_type, numeric_value, bool_value, unit)
-                    VALUES 
-                        ($1::timestamptz, $2, $3, $4, $5, $6)
-                )",
-                    pqxx::params{
-                        recorded_at_str,
-                        reading.deviceId,
-                        reading.sensorType,
-                        reading.value,
-                        reading.boolValue.value(),
-                        reading.unit});
-            }
-            else
-            {
-                txn.exec(
-                    R"(
-                    INSERT INTO sensor_readings 
-                        (recorded_at, device_id, sensor_type, numeric_value, bool_value, unit)
-                    VALUES 
-                        ($1::timestamptz, $2, $3, $4, $5, $6)
-                )",
-                    pqxx::params{
-                        recorded_at_str,
-                        reading.deviceId,
-                        reading.sensorType,
-                        reading.value,
-                        nullptr, 
-                        reading.unit});
-            }
-
-            txn.commit();
-            return true;
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "[Postgres] Save error: " << e.what() << std::endl;
-            return false;
-        }
+        return saveBatch({reading}) == 1;
     }
 
     std::size_t PostgresMeasurementRepository::saveBatch(const core::ReadingsBatch &readings)
@@ -99,26 +72,132 @@ namespace dorm_energy::storage
         if (readings.empty())
             return 0;
 
+        {
+            std::lock_guard<std::mutex> lock(bufferMutex_);
+            buffer_.insert(buffer_.end(), readings.begin(), readings.end());
+        }
+
+        if (buffer_.size() >= maxBufferSize_)
+            flush();
+
+        return readings.size();
+    }
+
+    void PostgresMeasurementRepository::flush()
+    {
+        std::vector<core::SensorReading> toFlush;
+        {
+            std::lock_guard<std::mutex> lock(bufferMutex_);
+            if (buffer_.empty())
+                return;
+            toFlush = std::move(buffer_);
+        }
+
+        if (toFlush.empty())
+            return;
+
+        doFlush(toFlush);
+    }
+
+    void PostgresMeasurementRepository::doFlush(const std::vector<core::SensorReading> &readings)
+    {
+        if (readings.empty())
+            return;
+
         try
         {
+            if (!connection_ || !connection_->is_open())
+            {
+                if (!tryReconnect(3))
+                    throw std::runtime_error("Cannot reconnect to database");
+            }
+
             pqxx::work txn{*connection_};
             std::size_t saved = 0;
+            std::size_t skipped = 0;
 
             for (const auto &r : readings)
             {
-                if (save(r))
+                std::string ts = fmt::format("{:%Y-%m-%d %H:%M:%S%z}", r.timestamp);
+
+                std::optional<bool> boolVal = r.boolValue;
+
+                try
+                {
+                    txn.exec(
+                        R"(INSERT INTO sensor_readings 
+                        (recorded_at, device_id, sensor_type, numeric_value, bool_value, unit)
+                       VALUES ($1::timestamptz, $2, $3, $4, $5, $6)
+                       ON CONFLICT (recorded_at, device_id, sensor_type) 
+                       DO NOTHING)",
+                        pqxx::params{ts, r.deviceId, r.sensorType, r.value, boolVal, r.unit});
+
                     ++saved;
+                }
+                catch (const pqxx::sql_error &e)
+                {
+                    ++skipped;
+                    std::cerr << "[Postgres] Skipped one reading due to: " << e.what() << std::endl;
+                }
             }
 
             txn.commit();
-            std::cout << fmt::format("[Postgres] Saved {} out of {} readings\n", saved, readings.size());
-            return saved;
+
+            if (saved > 0)
+                std::cout << fmt::format("[Postgres] Flushed {} readings (skipped {} duplicates)\n", saved, skipped);
         }
         catch (const std::exception &e)
         {
-            std::cerr << "[Postgres] Batch save error: " << e.what() << std::endl;
-            return 0;
+            std::cerr << "[Postgres] Critical flush error: " << e.what() << std::endl;
+
+            std::lock_guard<std::mutex> lock(bufferMutex_);
+            buffer_.insert(buffer_.begin(), readings.begin(), readings.end());
         }
     }
+    bool PostgresMeasurementRepository::saveAnomaly(
+        const core::SensorReading &reading,
+        const std::string &anomalyType,
+        const std::string &severity,
+        const std::string &description)
+    {
+        try
+        {
+            if (!connection_ || !connection_->is_open())
+            {
+                if (!tryReconnect(3))
+                    return false;
+            }
 
+            pqxx::work txn{*connection_};
+
+            std::string ts = fmt::format("{:%Y-%m-%d %H:%M:%S%z}", reading.timestamp);
+            std::optional<bool> boolVal = reading.boolValue;
+
+            txn.exec(
+                R"(INSERT INTO anomalies 
+                (recorded_at, device_id, sensor_type, numeric_value, bool_value, unit,
+                 anomaly_type, severity, description)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9))",
+                pqxx::params{
+                    ts,
+                    reading.deviceId,
+                    reading.sensorType,
+                    reading.value,
+                    boolVal,
+                    reading.unit,
+                    anomalyType,
+                    severity,
+                    description});
+
+            txn.commit();
+            std::cout << fmt::format("[Postgres] Anomaly saved: {} - {} ({})\n",
+                                     anomalyType, reading.deviceId, severity);
+            return true;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "[Postgres] Save anomaly error: " << e.what() << std::endl;
+            return false;
+        }
+    }
 } // namespace dorm_energy::storage

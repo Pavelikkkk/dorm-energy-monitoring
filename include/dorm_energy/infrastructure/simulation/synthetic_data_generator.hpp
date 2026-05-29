@@ -9,11 +9,14 @@
 
 namespace dorm_energy::simulation
 {
-
-    class SyntheticDataGenerator : public dorm_energy::simulation::IDataGenerator
+    class SyntheticDataGenerator : public IDataGenerator
     {
     public:
-        explicit SyntheticDataGenerator(unsigned seed = 42, bool inject_anomalies = false);
+        explicit SyntheticDataGenerator(
+            unsigned seed = 42,
+            bool inject_anomalies = false,
+            double anomaly_rate = 0.03);
+
         void setSeed(unsigned seed) override;
 
         core::ReadingsBatch generate() const override;
@@ -21,10 +24,12 @@ namespace dorm_energy::simulation
 
     private:
         mutable std::mt19937 rng_;
-        bool inject_anomalies_{false};
-        double anomaly_rate_{0.03};
+        bool inject_anomalies_;
+        double anomaly_rate_;
 
-        core::SensorReading generate_one_reading(std::chrono::system_clock::time_point ts) const;
+        core::SensorReading generate_one_reading(
+            std::chrono::system_clock::time_point base_time,
+            int reading_index) const;
     };
 
 } // namespace dorm_energy::simulation

@@ -12,22 +12,24 @@
 
 namespace dorm_energy::application
 {
+
     AppConfig AppConfig::load()
     {
         AppConfig config = loadFromEnvFile(".env");
-
         AppConfig envConfig = loadFromEnvironment();
 
-        if (!envConfig.dbHost.empty())
-            config.dbHost = envConfig.dbHost;
-        if (!envConfig.dbPort.empty())
-            config.dbPort = envConfig.dbPort;
-        if (!envConfig.dbName.empty())
-            config.dbName = envConfig.dbName;
-        if (!envConfig.dbUser.empty())
-            config.dbUser = envConfig.dbUser;
-        if (!envConfig.dbPassword.empty())
-            config.dbPassword = envConfig.dbPassword;
+        // Приоритет: переменные окружения перезаписывают .env
+        if (!envConfig.getDbHost().empty())
+            config.dbHost_ = envConfig.getDbHost();
+        if (!envConfig.getDbPort().empty())
+            config.dbPort_ = envConfig.getDbPort();
+        if (!envConfig.getDbName().empty())
+            config.dbName_ = envConfig.getDbName();
+        if (!envConfig.getDbUser().empty())
+            config.dbUser_ = envConfig.getDbUser();
+        if (!envConfig.getDbPassword().empty())
+            config.dbPassword_ = envConfig.getDbPassword();
+
         return config;
     }
 
@@ -43,7 +45,9 @@ namespace dorm_energy::application
             if (!std::filesystem::exists(exePath))
             {
                 auto parentPath = std::filesystem::current_path().parent_path();
-                if (parentPath.filename() == "build" || parentPath.filename() == "Debug" || parentPath.filename() == "Release")
+                if (parentPath.filename() == "build" ||
+                    parentPath.filename() == "Debug" ||
+                    parentPath.filename() == "Release")
                 {
                     exePath = parentPath.parent_path() / filename;
                 }
@@ -80,24 +84,36 @@ namespace dorm_energy::application
             value.erase(value.find_last_not_of(" \t") + 1);
 
             if (key == "DB_HOST")
-                config.dbHost = value;
+                config.dbHost_ = value;
             else if (key == "DB_PORT")
-                config.dbPort = value;
+                config.dbPort_ = value;
             else if (key == "DB_NAME")
-                config.dbName = value;
+                config.dbName_ = value;
             else if (key == "DB_USER")
-                config.dbUser = value;
+                config.dbUser_ = value;
             else if (key == "DB_PASSWORD")
-                config.dbPassword = value;
+                config.dbPassword_ = value;
             else if (key == "MQTT_BROKER")
-                config.mqttBroker = value;
+                config.mqttBroker_ = value;
+            else if (key == "MQTT_TOPIC")
+                config.mqttTopic_ = value;
             else if (key == "LOG_LEVEL")
-                config.logLevel = value;
+                config.logLevel_ = value;
             else if (key == "SIMULATION_DAYS")
             {
                 try
                 {
-                    config.simulationDays = std::stoi(value);
+                    config.simulationDays_ = std::stoi(value);
+                }
+                catch (...)
+                {
+                }
+            }
+            else if (key == "DB_MAX_BUFFER_SIZE")
+            {
+                try
+                {
+                    config.dbMaxBufferSize_ = std::stoul(value);
                 }
                 catch (...)
                 {
@@ -112,82 +128,93 @@ namespace dorm_energy::application
         AppConfig config;
 
         if (const char *val = std::getenv("MQTT_BROKER"))
-            config.mqttBroker = val;
+            config.mqttBroker_ = val;
         if (const char *val = std::getenv("MQTT_TOPIC"))
-            config.mqttTopic = val;
+            config.mqttTopic_ = val;
         if (const char *val = std::getenv("DB_HOST"))
-            config.dbHost = val;
+            config.dbHost_ = val;
         if (const char *val = std::getenv("DB_PORT"))
-            config.dbPort = val;
+            config.dbPort_ = val;
         if (const char *val = std::getenv("DB_NAME"))
-            config.dbName = val;
+            config.dbName_ = val;
         if (const char *val = std::getenv("DB_USER"))
-            config.dbUser = val;
+            config.dbUser_ = val;
         if (const char *val = std::getenv("DB_PASSWORD"))
-            config.dbPassword = val;
+            config.dbPassword_ = val;
         if (const char *val = std::getenv("LOG_LEVEL"))
-            config.logLevel = val;
+            config.logLevel_ = val;
 
         if (const char *val = std::getenv("SIMULATION_DAYS"))
         {
             try
             {
-                config.simulationDays = std::stoi(val);
+                config.simulationDays_ = std::stoi(val);
             }
             catch (...)
             {
             }
         }
+        if (const char *val = std::getenv("DB_MAX_BUFFER_SIZE"))
+        {
+            try
+            {
+                config.dbMaxBufferSize_ = std::stoul(val);
+            }
+            catch (...)
+            {
+            }
+        }
+
         return config;
     }
 
     void AppConfig::overrideFromCli(const cli::CommandOptions &cli)
     {
         if (cli.common.verbose)
-            verbose = true;
+            verbose_ = true;
 
         if (cli.isSimulate())
         {
-            simulationDays = cli.simulateDays;
-            injectAnomalies = cli.injectAnomalies;
-            anomalyRate = cli.anomalyRate;
+            simulationDays_ = cli.simulateDays;
+            injectAnomalies_ = cli.injectAnomalies;
+            anomalyRate_ = cli.anomalyRate;
         }
 
         if (!cli.mqttBroker.empty())
-            mqttBroker = cli.mqttBroker;
+            mqttBroker_ = cli.mqttBroker;
         if (!cli.mqttTopic.empty())
-            mqttTopic = cli.mqttTopic;
+            mqttTopic_ = cli.mqttTopic;
     }
 
     std::string AppConfig::getDbConnectionString() const
     {
         std::ostringstream oss;
-        oss << "host=" << dbHost
-            << " port=" << dbPort
-            << " dbname=" << dbName
-            << " user=" << dbUser;
+        oss << "host=" << dbHost_
+            << " port=" << dbPort_
+            << " dbname=" << dbName_
+            << " user=" << dbUser_;
 
-        if (!dbPassword.empty())
-            oss << " password=" << dbPassword;
+        if (!dbPassword_.empty())
+            oss << " password=" << dbPassword_;
 
         return oss.str();
     }
 
     std::string AppConfig::validate() const
     {
-        if (mqttBroker.empty())
+        if (mqttBroker_.empty())
             return "MQTT broker address is not set";
-        if (dbHost.empty() || dbName.empty())
+        if (dbHost_.empty() || dbName_.empty())
             return "Database configuration is incomplete";
-        if (simulationDays <= 0)
+        if (simulationDays_ <= 0)
             return "Simulation days must be positive";
         return "";
     }
 
     void AppConfig::clearSensitiveData()
     {
-        dbPassword.clear();
-        dbPassword.shrink_to_fit();
+        dbPassword_.clear();
+        dbPassword_.shrink_to_fit();
     }
 
 } // namespace dorm_energy::application

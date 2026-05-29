@@ -5,29 +5,24 @@
 
 namespace dorm_energy::storage
 {
-
     /**
      * @brief Интерфейс для сохранения показаний датчиков
-     *
-     * Реализации: PostgreSQL (TimescaleDB)
      */
     class IMeasurementRepository
     {
     public:
         virtual ~IMeasurementRepository() = default;
 
-        /**
-         * @brief Сохраняет одно показание
-         */
-        virtual bool save(const core::SensorReading &reading) = 0;
-
-        /**
-         * @brief Сохраняет пакет показаний
-         */
+        virtual bool save(const core::SensorReading &reading) = 0; // TODO: переименовать в saveReading
         virtual std::size_t saveBatch(const core::ReadingsBatch &readings) = 0;
 
-        // virtual ReadingsBatch find_by_device(const std::string& device_id, std::size_t limit) const = 0;
-        // virtual std::size_t count() const = 0;
-    };
+        virtual void flush() = 0;
 
-} // namespace dorm_energy::domain::storage
+        virtual bool saveAnomaly(const core::SensorReading &reading,
+                                 const std::string &anomalyType,
+                                 const std::string &severity,
+                                 const std::string &description) = 0;
+
+        // virtual void shutdown() = 0;
+    };
+} // namespace dorm_energy::storage

@@ -1,6 +1,7 @@
 // src/dorm_energy/infrastructure/handlers/message_handler.cpp
 #include "dorm_energy/infrastructure/handlers/message_handler.hpp"
 
+#include <fmt/format.h>
 #include <iostream>
 
 namespace dorm_energy::handlers
@@ -10,7 +11,9 @@ namespace dorm_energy::handlers
         std::unique_ptr<dorm_energy::detection::IAnomalyDetector> detector,
         std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository,
         std::unique_ptr<dorm_energy::application::INotifier> notifier)
-        : detector_(std::move(detector)), repository_(std::move(repository)), notifier_(std::move(notifier))
+        : detector_(std::move(detector)),
+          repository_(std::move(repository)),
+          notifier_(std::move(notifier))
     {
         if (!detector_ || !repository_ || !notifier_)
         {
@@ -20,14 +23,16 @@ namespace dorm_energy::handlers
 
     bool MessageHandler::handle(const core::SensorReading &reading)
     {
-        if (detector_->isAnomaly(reading))
+        auto anomalyInfo = detector_->detect(reading);
+
+        if (anomalyInfo.isAnomaly)
         {
-            notifier_->sendAlert(reading, "Power consumption anomaly detected");
+            processAnomaly(reading);
+            notifier_->sendAlert(reading, anomalyInfo.description);
         }
 
         batch_.push_back(reading);
-        
-        // пока простой порогпотом сделатьнорм
+
         const std::size_t BATCH_THRESHOLD = 100;
         if (batch_.size() >= BATCH_THRESHOLD)
         {
@@ -43,22 +48,19 @@ namespace dorm_energy::handlers
             return 0;
 
         std::size_t processed = 0;
-        std::vector<core::SensorReading> anomalies;
 
         for (const auto &reading : readings)
         {
-            if (detector_->isAnomaly(reading))
+            auto anomalyInfo = detector_->detect(reading);
+
+            if (anomalyInfo.isAnomaly)
             {
-                anomalies.push_back(reading);
+                processAnomaly(reading);
+                notifier_->sendAlert(reading, anomalyInfo.description);
             }
 
             batch_.push_back(reading);
             ++processed;
-        }
-
-        if (!anomalies.empty())
-        {
-            notifier_->sendAlerts(anomalies, "Multiple anomalies detected in batch");
         }
 
         const std::size_t BATCH_THRESHOLD = 100;
@@ -68,6 +70,17 @@ namespace dorm_energy::handlers
         }
 
         return processed;
+    }
+
+    void MessageHandler::processAnomaly(const core::SensorReading &reading)
+    {
+        auto info = detector_->detect(reading);
+
+        repository_->saveAnomaly(
+            reading,
+            info.anomalyType,
+            info.severity,
+            info.description);
     }
 
     void MessageHandler::flush()
@@ -82,9 +95,8 @@ namespace dorm_energy::handlers
 
         std::size_t saved = repository_->saveBatch(batch_);
 
-        // TODO: заменить на ILogger позже
-        std::cout << "[MessageHandler] Saved " << saved
-                  << " readings to repository (batch size: " << batch_.size() << ")\n";
+        std::cout << fmt::format("[MessageHandler] Saved {} readings to repository (batch size: {})\n",
+                                 saved, batch_.size());
 
         batch_.clear();
     }

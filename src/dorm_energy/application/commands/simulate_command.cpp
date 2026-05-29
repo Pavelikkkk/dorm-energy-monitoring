@@ -1,7 +1,12 @@
 // src/dorm_energy/application/commands/simulate_command.cpp
 #include "dorm_energy/application/commands/simulate_command.hpp"
 #include "dorm_energy/core/measurement.hpp"
+#include "dorm_energy/domain/detection/ianomaly_detector.hpp"
+#include "dorm_energy/domain/simulation/idata_generator.hpp"
+#include "dorm_energy/domain/storage/imeasurement_repository.hpp"
+#include "dorm_energy/domain/logging/ilogger.hpp"
 
+#include <fmt/format.h>
 #include <iostream>
 
 namespace dorm_energy::application
@@ -12,7 +17,10 @@ namespace dorm_energy::application
         std::unique_ptr<dorm_energy::simulation::IDataGenerator> generator,
         std::unique_ptr<dorm_energy::detection::IAnomalyDetector> detector,
         std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository)
-        : logger_(std::move(logger)), generator_(std::move(generator)), detector_(std::move(detector)), repository_(std::move(repository))
+        : logger_(std::move(logger)),
+          generator_(std::move(generator)),
+          detector_(std::move(detector)),
+          repository_(std::move(repository))
     {
         if (!logger_ || !generator_ || !detector_ || !repository_)
         {
@@ -36,18 +44,36 @@ namespace dorm_energy::application
         int anomalyCount = detector_->countAnomalies(batch);
         logger_->info("Detected anomalies: " + std::to_string(anomalyCount));
 
+        std::size_t saved = repository_->saveBatch(batch);
+        logger_->info("Saved " + std::to_string(saved) + " readings to the database");
+
         if (anomalyCount > 0)
         {
             auto anomalies = detector_->getAnomalies(batch);
-            std::cout << "\n=== ANOMALIES DETECTED ===\n";
-            for (const auto &anomaly : anomalies)
-            {
-                std::cout << core::toString(anomaly) << std::endl;
-            }
-        }
+            std::cout << "\n=== ANOMALIES DETECTED (" << anomalyCount << ") ===\n";
 
-        std::size_t saved = repository_->saveBatch(batch);
-        logger_->info("Saved " + std::to_string(saved) + " readings to the database");
+            int savedAnomalies = 0;
+
+            for (const auto &reading : anomalies)
+            {
+                auto info = detector_->detect(reading);
+
+                bool success = repository_->saveAnomaly(
+                    reading,
+                    info.anomalyType,
+                    info.severity,
+                    info.description);
+
+                if (success)
+                    ++savedAnomalies;
+
+                std::cout << core::toString(reading)
+                          << " → " << info.anomalyType
+                          << " (" << info.severity << ")\n";
+            }
+
+            logger_->info("Saved " + std::to_string(savedAnomalies) + " anomalies to anomalies table");
+        }
 
         logger_->info("Simulation completed successfully");
         return 0;

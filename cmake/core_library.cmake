@@ -35,6 +35,6 @@ target_link_libraries(dorm_energy_core
         libpqxx::pqxx
         OpenSSL::SSL
         OpenSSL::Crypto
-        eclipse-paho-mqtt-c::paho-mqtt3a
         PahoMqttCpp::paho-mqttpp3
+        # eclipse-paho-mqtt-c::paho-mqtt3as
 )

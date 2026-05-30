@@ -95,7 +95,15 @@ namespace dorm_energy::application
         if (!sharedClient)
         {
             sharedClient = std::make_shared<mqtt::MqttClient>();
-            sharedClient->setMode(mqtt::MqttMode::Simulation);
+
+            if (!config_.getMqttBroker().empty())
+            {
+                sharedClient->setMode(mqtt::MqttMode::Real);
+            }
+            else
+            {
+                sharedClient->setMode(mqtt::MqttMode::Simulation);
+            }
         }
 
         return sharedClient;
@@ -134,6 +142,7 @@ namespace dorm_energy::application
     {
         return std::make_unique<DaemonCommand>(
             createLogger(),
+            config_,
             createMqttConnection(),
             createMqttSubscription(),
             createMqttDispatcher(),

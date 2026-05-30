@@ -2,46 +2,66 @@
 #include "dorm_energy/infrastructure/mqtt/message_parser.hpp"
 #include "dorm_energy/core/measurement.hpp"
 
-#include <string>
-#include <optional>
-#include <sstream>
+#include <nlohmann/json.hpp>
+#include <fmt/format.h>
+#include <chrono>
 #include <iostream>
 
 namespace dorm_energy::mqtt
 {
 
-    bool MessageParser::canParse(const std::string &payload) const
+    std::optional<core::SensorReading> MessageParser::parse(const std::string &payload) const
     {
         if (payload.empty())
         {
-            return false;
-        }
-        // проверить наличие ключей "deviceId", "sensorType" .
-        return payload.find('{') != std::string::npos &&
-               payload.find('}') != std::string::npos;
-    }
-
-    std::optional<core::SensorReading> MessageParser::parse(const std::string &payload) const
-    {
-        if (!canParse(payload))
-        {
-            std::cerr << "[MessageParser] Couldn't parse payload: " << payload << std::endl;
+            std::cerr << "[MessageParser] Empty payload\n";
             return std::nullopt;
         }
 
-        // здесь будет полноценный JSON-парсер
+        try
+        {
+            auto j = nlohmann::json::parse(payload);
 
-        core::SensorReading reading;
-        reading.timestamp = std::chrono::system_clock::now();
-        reading.deviceId = "mqtt-device-01";
-        reading.sensorType = "power";
-        reading.value = 5.67;
-        reading.unit = "kW";
+            core::SensorReading reading;
+            reading.timestamp = std::chrono::system_clock::now();
 
-        std::cout << "[MessageParser] Successfully parsed: "
-                  << core::toString(reading) << std::endl;
+            reading.deviceId = j.value("deviceId", j.value("device_id", std::string("unknown")));
+            reading.sensorType = j.value("sensorType", j.value("sensor_type", std::string("unknown")));
 
-        return reading;
+            if (j.contains("value") || j.contains("numeric_value"))
+            {
+                reading.value = j.value("value", j.value("numeric_value", 0.0));
+            }
+
+            if (j.contains("boolValue") || j.contains("bool_value"))
+            {
+                reading.boolValue = j.value("boolValue", j.value("bool_value", false));
+            }
+
+            reading.unit = j.value("unit", std::string(""));
+
+            std::cout << fmt::format("[MessageParser] Parsed: {} | {} | {:.2f} {}\n",
+                                     reading.deviceId, reading.sensorType, reading.value, reading.unit);
+
+            return reading;
+        }
+        catch (const nlohmann::json::parse_error &e)
+        {
+            std::cerr << "[MessageParser] JSON parse error: " << e.what() << "\nPayload: " << payload << std::endl;
+            return std::nullopt;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "[MessageParser] Error parsing message: " << e.what() << std::endl;
+            return std::nullopt;
+        }
+    }
+
+    bool MessageParser::canParse(const std::string &payload) const
+    {
+        if (payload.empty() || payload.size() > 4096)
+            return false;
+        return payload.find('{') != std::string::npos;
     }
 
 } // namespace dorm_energy::mqtt

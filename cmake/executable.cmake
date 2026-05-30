@@ -16,6 +16,6 @@ target_link_libraries(dorm-sim
         dorm_energy_core
 )
 
-target_link_options(dorm-sim 
-    PRIVATE 
-        /FORCE:MULTIPLE)
+# target_link_options(dorm-sim 
+#     PRIVATE 
+#         /FORCE:MULTIPLE)

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "dorm_energy/application/cli/command_options.hpp"
+#include "dorm_energy/application/config/app_config.hpp"
 
 #include "dorm_energy/domain/logging/ilogger.hpp"
 #include "dorm_energy/domain/mqtt/imqtt_connection.hpp"
@@ -13,26 +14,22 @@
 
 namespace dorm_energy::application
 {
-
-    /**
-     * @brief Команда запуска демона (долгоживущий процесс)
-     */
     class DaemonCommand
     {
     public:
         explicit DaemonCommand(
             std::shared_ptr<dorm_energy::logging::ILogger> logger,
-
+            AppConfig config, 
             std::shared_ptr<dorm_energy::mqtt::IMqttConnection> mqtt_connection,
             std::shared_ptr<dorm_energy::mqtt::IMqttSubscription> mqtt_subscription,
             std::shared_ptr<dorm_energy::mqtt::IMqttMessageDispatcher> mqtt_dispatcher,
-
             std::unique_ptr<application::IMessageHandler> message_handler);
 
         int execute(const cli::CommandOptions &options);
 
     private:
         std::shared_ptr<dorm_energy::logging::ILogger> logger_;
+        AppConfig config_; 
 
         std::shared_ptr<dorm_energy::mqtt::IMqttConnection> mqtt_connection_;
         std::shared_ptr<dorm_energy::mqtt::IMqttSubscription> mqtt_subscription_;

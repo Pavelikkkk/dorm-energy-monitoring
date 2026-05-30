@@ -69,7 +69,7 @@ namespace dorm_energy::application
 
                 std::cout << core::toString(reading)
                           << " → " << info.anomalyType
-                          << " (" << info.severity << ")\n";
+                          << " (" << core::toString(info.severity) << ")\n";
             }
 
             logger_->info("Saved " + std::to_string(savedAnomalies) + " anomalies to anomalies table");

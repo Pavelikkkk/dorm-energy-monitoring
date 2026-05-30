@@ -1,16 +1,21 @@
-// include/dorm_energy/infrastructure/notifier/console_notifier.hpp
 #pragma once
 
 #include "dorm_energy/application/inotifier.hpp"
-#include "dorm_energy/core/measurement.hpp"
-#include "dorm_energy/core/alert_severity.hpp"  
+#include <vector>
+#include <memory>
 
-namespace dorm_energy::notifier
+namespace dorm_energy::application
 {
-    class ConsoleNotifier : public application::INotifier
+    /**
+     * @brief Композитный нотификатор — позволяет использовать несколько каналов одновременно
+     * (Console + Telegram + WebSocket и т.д.)
+     */
+    class NotifierService : public INotifier
     {
     public:
-        ConsoleNotifier() = default;
+        NotifierService() = default;
+
+        void addNotifier(std::unique_ptr<INotifier> notifier);
 
         bool sendAlert(const core::SensorReading &reading,
                        core::AlertSeverity severity = core::AlertSeverity::Warning,
@@ -21,7 +26,6 @@ namespace dorm_energy::notifier
                                const std::string &reason = "") override;
 
     private:
-        std::string formatAlert(const core::SensorReading &reading,
-                                const std::string &reason) const;
+        std::vector<std::unique_ptr<INotifier>> notifiers_;
     };
-} // namespace dorm_energy::notifier
+}

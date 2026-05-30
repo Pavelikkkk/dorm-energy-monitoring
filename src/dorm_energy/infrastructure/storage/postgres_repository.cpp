@@ -1,5 +1,6 @@
 // src/dorm_energy/infrastructure/storage/postgres_repository.cpp
 #include "dorm_energy/infrastructure/storage/postgres_repository.hpp"
+#include "dorm_energy/core/alert_severity.hpp"
 
 #include <fmt/format.h>
 #include <fmt/chrono.h>
@@ -154,10 +155,11 @@ namespace dorm_energy::storage
             buffer_.insert(buffer_.begin(), readings.begin(), readings.end());
         }
     }
+
     bool PostgresMeasurementRepository::saveAnomaly(
         const core::SensorReading &reading,
         const std::string &anomalyType,
-        const std::string &severity,
+        core::AlertSeverity severity,
         const std::string &description)
     {
         try
@@ -175,9 +177,9 @@ namespace dorm_energy::storage
 
             txn.exec(
                 R"(INSERT INTO anomalies 
-                (recorded_at, device_id, sensor_type, numeric_value, bool_value, unit,
-                 anomaly_type, severity, description)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9))",
+            (recorded_at, device_id, sensor_type, numeric_value, bool_value, unit,
+             anomaly_type, severity, description)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9))",
                 pqxx::params{
                     ts,
                     reading.deviceId,
@@ -186,12 +188,17 @@ namespace dorm_energy::storage
                     boolVal,
                     reading.unit,
                     anomalyType,
-                    severity,
+                    core::toString(severity),
                     description});
 
             txn.commit();
+
+            // Исправленная строка:
             std::cout << fmt::format("[Postgres] Anomaly saved: {} - {} ({})\n",
-                                     anomalyType, reading.deviceId, severity);
+                                     anomalyType,
+                                     reading.deviceId,
+                                     core::toString(severity));
+
             return true;
         }
         catch (const std::exception &e)

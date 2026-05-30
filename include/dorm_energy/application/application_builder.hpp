@@ -18,6 +18,9 @@
 #include "dorm_energy/infrastructure/mqtt/mqtt_client.hpp"
 
 #include "dorm_energy/infrastructure/cli/cli_parser.hpp"
+#include "dorm_energy/application/notifier_service.hpp"
+#include "dorm_energy/infrastructure/notifier/console_notifier.hpp"
+#include "dorm_energy/infrastructure/notifier/telegram_notifier.hpp"
 
 #include <memory>
 

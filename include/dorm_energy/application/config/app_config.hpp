@@ -29,7 +29,9 @@ namespace dorm_energy::application
         const std::string &getMqttClientId() const { return mqttClientId_; }
         const std::string &getMqttTopic() const { return mqttTopic_; }
 
-        const std::string &getNotifierType() const { return notifierType_; }
+        const std::string &getTelegramBotToken() const { return telegramBotToken_; }
+        const std::string &getTelegramChatId() const { return telegramChatId_; }
+        bool isTelegramEnabled() const { return telegramEnabled_; }
 
         static AppConfig load();
         static AppConfig loadFromEnvironment();
@@ -61,6 +63,9 @@ namespace dorm_energy::application
         std::string mqttTopic_{"devices/+/power"};
 
         std::string notifierType_{"console"};
+        bool telegramEnabled_{false};
+        std::string telegramBotToken_;
+        std::string telegramChatId_;
     };
 
 } // namespace dorm_energy::application

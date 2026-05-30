@@ -2,6 +2,7 @@
 #pragma once
 
 #include "dorm_energy/core/measurement.hpp"
+#include "dorm_energy/core/alert_severity.hpp" 
 #include <string>
 
 namespace dorm_energy::detection
@@ -10,7 +11,7 @@ namespace dorm_energy::detection
     {
         bool isAnomaly = false;
         std::string anomalyType;
-        std::string severity;
+        core::AlertSeverity severity = core::AlertSeverity::Warning; 
         std::string description;
     };
 

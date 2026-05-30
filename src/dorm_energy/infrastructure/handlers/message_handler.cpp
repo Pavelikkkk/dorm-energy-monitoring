@@ -28,7 +28,9 @@ namespace dorm_energy::handlers
         if (anomalyInfo.isAnomaly)
         {
             processAnomaly(reading);
-            notifier_->sendAlert(reading, anomalyInfo.description);
+            notifier_->sendAlert(reading,
+                                 anomalyInfo.severity,
+                                 anomalyInfo.description);
         }
 
         batch_.push_back(reading);
@@ -56,7 +58,9 @@ namespace dorm_energy::handlers
             if (anomalyInfo.isAnomaly)
             {
                 processAnomaly(reading);
-                notifier_->sendAlert(reading, anomalyInfo.description);
+                notifier_->sendAlert(reading,
+                                     anomalyInfo.severity,
+                                     anomalyInfo.description);
             }
 
             batch_.push_back(reading);

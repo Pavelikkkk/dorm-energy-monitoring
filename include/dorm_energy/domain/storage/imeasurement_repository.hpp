@@ -2,6 +2,7 @@
 #pragma once
 
 #include "dorm_energy/core/measurement.hpp"
+#include "dorm_energy/core/alert_severity.hpp"
 
 namespace dorm_energy::storage
 {
@@ -20,7 +21,7 @@ namespace dorm_energy::storage
 
         virtual bool saveAnomaly(const core::SensorReading &reading,
                                  const std::string &anomalyType,
-                                 const std::string &severity,
+                                 core::AlertSeverity severity,
                                  const std::string &description) = 0;
 
         // virtual void shutdown() = 0;

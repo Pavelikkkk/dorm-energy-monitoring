@@ -28,12 +28,16 @@ namespace dorm_energy::detection
             {
                 info.isAnomaly = true;
                 info.anomalyType = "high_power";
-                info.severity = (reading.value > maxPowerKw_ * 2.0) ? "high" : "medium";
+
+                if (reading.value > maxPowerKw_ * 2.0)
+                    info.severity = core::AlertSeverity::Critical;
+                else
+                    info.severity = core::AlertSeverity::Warning;
+
                 info.description = fmt::format("Power consumption {:.2f} kW exceeds threshold {:.2f} kW",
                                                reading.value, maxPowerKw_);
             }
         }
-        // другие типы аномалий позже
 
         return info;
     }

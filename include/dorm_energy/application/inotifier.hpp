@@ -2,40 +2,23 @@
 #pragma once
 
 #include "dorm_energy/core/measurement.hpp"
+#include "dorm_energy/core/alert_severity.hpp"
 #include <string>
 #include <vector>
 
 namespace dorm_energy::application
 {
-    /**
-     * @brief Порт для отправки уведомлений об аномалиях
-     *
-     * Реализации могут быть:
-     * - ConsoleNotifier
-     * - TelegramNotifier
-     * - EmailNotifier
-     * - Push-уведомления и т.д.
-     */
     class INotifier
     {
     public:
         virtual ~INotifier() = default;
 
-        /**
-         * @brief Отправляет alert об аномальном показании
-         * @param reading аномальное показание
-         * @param reason  причина, почему это аномалия (опционально)
-         */
         virtual bool sendAlert(const core::SensorReading &reading,
-                                const std::string &reason = "") = 0;
+                               core::AlertSeverity severity = core::AlertSeverity::Warning,
+                               const std::string &reason = "") = 0;
 
-        /**
-         * @brief Отправляет несколько алертов за раз (например, при обнаружении нескольких аномалий в батче)
-         * @param readings вектор аномальных показаний
-         * @param reason  причина, почему это аномалия (опционально)
-         */
-        virtual std::size_t  sendAlerts(const std::vector<core::SensorReading> &readings,
-                                 const std::string &reason = "") = 0;
+        virtual std::size_t sendAlerts(const std::vector<core::SensorReading> &readings,
+                                       core::AlertSeverity severity = core::AlertSeverity::Warning,
+                                       const std::string &reason = "") = 0;
     };
-
 } // namespace dorm_energy::application

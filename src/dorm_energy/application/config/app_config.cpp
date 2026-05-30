@@ -119,6 +119,16 @@ namespace dorm_energy::application
                 {
                 }
             }
+            else if (key == "TELEGRAM_ENABLED")
+            {
+                std::string v = value;
+                std::transform(v.begin(), v.end(), v.begin(), ::tolower);
+                config.telegramEnabled_ = (v == "true" || v == "1" || v == "on" || v == "yes");
+            }
+            else if (key == "TELEGRAM_BOT_TOKEN")
+                config.telegramBotToken_ = value;
+            else if (key == "TELEGRAM_CHAT_ID")
+                config.telegramChatId_ = value;
         }
         return config;
     }
@@ -143,6 +153,17 @@ namespace dorm_energy::application
             config.dbPassword_ = val;
         if (const char *val = std::getenv("LOG_LEVEL"))
             config.logLevel_ = val;
+        if (const char *val = std::getenv("TELEGRAM_ENABLED"))
+        {
+            std::string s = val;
+            config.telegramEnabled_ = (s == "1" || s == "true" || s == "TRUE" || s == "on");
+        }
+
+        if (const char *val = std::getenv("TELEGRAM_BOT_TOKEN"))
+            config.telegramBotToken_ = val;
+
+        if (const char *val = std::getenv("TELEGRAM_CHAT_ID"))
+            config.telegramChatId_ = val;
 
         if (const char *val = std::getenv("SIMULATION_DAYS"))
         {

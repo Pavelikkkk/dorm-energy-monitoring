@@ -1,0 +1,19 @@
+{
+  "name": "dorm-energy",
+  "version": "2.0.0",
+  "description": "Система мониторинга энергопотребления в общежитии",
+  "homepage": "",
+  "license": "",
+  "dependencies": [
+    "cli11",
+    "spdlog",
+    "fmt",
+    "nlohmann-json",
+    "libpqxx",
+    "curl",
+    "openssl",
+    "paho-mqtt-cpp"
+  ],
+  "default-features": [],
+  "features": {}
+}

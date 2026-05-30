@@ -3,6 +3,7 @@
 
 #include "dorm_energy/domain/storage/imeasurement_repository.hpp"
 #include "dorm_energy/core/measurement.hpp"
+#include "dorm_energy/core/alert_severity.hpp"
 
 #include <pqxx/pqxx>
 #include <memory>
@@ -27,7 +28,7 @@ namespace dorm_energy::storage
 
         bool saveAnomaly(const core::SensorReading &reading,
                          const std::string &anomalyType,
-                         const std::string &severity,
+                         core::AlertSeverity severity,
                          const std::string &description) override;
 
         void flush() override;

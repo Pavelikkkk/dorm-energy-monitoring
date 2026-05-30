@@ -77,9 +77,33 @@ namespace dorm_energy::application
 
     std::unique_ptr<application::INotifier> ApplicationBuilder::createNotifier()
     {
-        return std::make_unique<notifier::ConsoleNotifier>();
-    }
+        auto service = std::make_unique<application::NotifierService>();
 
+        service->addNotifier(std::make_unique<notifier::ConsoleNotifier>());
+
+        if (config_.isTelegramEnabled() &&
+            !config_.getTelegramBotToken().empty() &&
+            !config_.getTelegramChatId().empty())
+        {
+            try
+            {
+                auto telegramNotifier = std::make_unique<notifier::TelegramNotifier>(config_);
+                service->addNotifier(std::move(telegramNotifier));
+
+                std::cout << "[Builder] ✅ TelegramNotifier successfully enabled\n";
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "[Builder] ❌ Failed to initialize TelegramNotifier: " << e.what() << std::endl;
+            }
+        }
+        else if (config_.isTelegramEnabled())
+        {
+            std::cout << "[Builder] ⚠️ Telegram enabled in config, but token or chat_id is missing\n";
+        }
+
+        return service;
+    }
     std::unique_ptr<application::IMessageHandler> ApplicationBuilder::createMessageHandler()
     {
         return std::make_unique<handlers::MessageHandler>(

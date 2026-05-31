@@ -12,7 +12,8 @@
     "libpqxx",
     "curl",
     "openssl",
-    "paho-mqtt-cpp"
+    "paho-mqtt-cpp",
+    "onnxruntime"
   ],
   "default-features": [],
   "features": {}

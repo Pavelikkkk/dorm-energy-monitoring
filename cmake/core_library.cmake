@@ -21,6 +21,7 @@ add_library(dorm_energy_core STATIC
     src/dorm_energy/infrastructure/detection/anomaly_detector.cpp
     src/dorm_energy/infrastructure/notifier/telegram_queue.cpp
     src/dorm_energy/infrastructure/notifier/telegram_poller.cpp
+    src/dorm_energy/infrastructure/simulation/csv_exporter.cpp
 
     # Application
     src/dorm_energy/application/config/app_config.cpp
@@ -43,4 +44,5 @@ target_link_libraries(dorm_energy_core
         OpenSSL::Crypto
         PahoMqttCpp::paho-mqttpp3
         CURL::libcurl
+        onnxruntime::onnxruntime
 )

@@ -18,10 +18,12 @@ add_library(dorm_energy_core STATIC
     src/dorm_energy/infrastructure/mqtt/mqtt_client.cpp
     src/dorm_energy/infrastructure/mqtt/message_parser.cpp
     src/dorm_energy/infrastructure/storage/postgres_repository.cpp
-    src/dorm_energy/infrastructure/detection/anomaly_detector.cpp
+    src/dorm_energy/infrastructure/detection/rule_based_detector.cpp
     src/dorm_energy/infrastructure/notifier/telegram_queue.cpp
     src/dorm_energy/infrastructure/notifier/telegram_poller.cpp
     src/dorm_energy/infrastructure/simulation/csv_exporter.cpp
+    src/dorm_energy/infrastructure/detection/room_state_aggregator.cpp
+    
 
     # Application
     src/dorm_energy/application/config/app_config.cpp
@@ -31,6 +33,12 @@ add_library(dorm_energy_core STATIC
     src/dorm_energy/application/application.cpp
     src/dorm_energy/application/runtime.cpp
     src/dorm_energy/application/notifier_service.cpp
+)
+
+target_include_directories(
+    dorm_energy_core
+    PRIVATE
+        ${ONNXRUNTIME_INCLUDE_DIR}
 )
 
 target_link_libraries(dorm_energy_core
@@ -44,5 +52,5 @@ target_link_libraries(dorm_energy_core
         OpenSSL::Crypto
         PahoMqttCpp::paho-mqttpp3
         CURL::libcurl
-        onnxruntime::onnxruntime
+        ${ONNXRUNTIME_LIB}
 )

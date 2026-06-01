@@ -10,7 +10,7 @@
 
 #include "dorm_energy/domain/logging/ilogger.hpp"
 #include "dorm_energy/domain/simulation/idata_generator.hpp"
-#include "dorm_energy/domain/detection/ianomaly_detector.hpp"
+#include "dorm_energy/domain/detection/istate_detector.hpp"
 #include "dorm_energy/domain/storage/imeasurement_repository.hpp"
 #include "dorm_energy/domain/mqtt/imqtt_connection.hpp"
 #include "dorm_energy/domain/mqtt/imqtt_subscription.hpp"
@@ -49,7 +49,7 @@ namespace dorm_energy::application
         std::shared_ptr<dorm_energy::logging::ILogger> createLogger();
 
         std::unique_ptr<dorm_energy::simulation::IDataGenerator> createGenerator();
-        std::unique_ptr<dorm_energy::detection::IAnomalyDetector> createDetector();
+        std::unique_ptr<dorm_energy::detection::IStateDetector> createDetector();
         std::shared_ptr<dorm_energy::storage::IMeasurementRepository> createRepository();
         std::unique_ptr<dorm_energy::application::IMessageHandler> createMessageHandler();
         std::unique_ptr<dorm_energy::application::INotifier> createNotifier();

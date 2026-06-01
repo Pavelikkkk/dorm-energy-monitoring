@@ -1,4 +1,3 @@
-// src/dorm_energy/infrastructure/handlers/message_handler.cpp
 #include "dorm_energy/infrastructure/handlers/message_handler.hpp"
 
 #include <fmt/format.h>
@@ -8,7 +7,7 @@ namespace dorm_energy::handlers
 {
 
     MessageHandler::MessageHandler(
-        std::unique_ptr<dorm_energy::detection::IAnomalyDetector> detector,
+        std::unique_ptr<dorm_energy::detection::IStateDetector> detector,
         std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository,
         std::unique_ptr<dorm_energy::application::INotifier> notifier)
         : detector_(std::move(detector)),
@@ -17,34 +16,54 @@ namespace dorm_energy::handlers
     {
         if (!detector_ || !repository_ || !notifier_)
         {
-            throw std::invalid_argument("MessageHandler: all dependencies must be provided");
+            throw std::invalid_argument(
+                "MessageHandler: all dependencies must be provided");
         }
     }
 
-    bool MessageHandler::handle(const core::SensorReading &reading)
+    bool MessageHandler::handle(
+        const core::SensorReading &reading)
     {
-        auto anomalyInfo = detector_->detect(reading);
-
-        if (anomalyInfo.isAnomaly)
-        {
-            processAnomaly(reading);
-            notifier_->sendAlert(reading,
-                                 anomalyInfo.severity,
-                                 anomalyInfo.description);
-        }
-
         batch_.push_back(reading);
 
-        const std::size_t BATCH_THRESHOLD = 100;
+        constexpr std::size_t
+            BATCH_THRESHOLD = 100;
+
         if (batch_.size() >= BATCH_THRESHOLD)
         {
             persistCurrentBatch();
         }
 
+        auto state =
+            aggregator_.update(reading);
+
+        if (!state.has_value())
+        {
+            return true;
+        }
+
+        auto anomalyInfo =
+            detector_->detect(*state);
+
+        if (anomalyInfo.isAnomaly)
+        {
+            repository_->saveAnomaly(
+                reading,
+                anomalyInfo.anomalyType,
+                anomalyInfo.severity,
+                anomalyInfo.description);
+
+            notifier_->sendAlert(
+                reading,
+                anomalyInfo.severity,
+                anomalyInfo.description);
+        }
+
         return true;
     }
 
-    std::size_t MessageHandler::handleBatch(const std::vector<core::SensorReading> &readings)
+    std::size_t MessageHandler::handleBatch(
+        const std::vector<core::SensorReading> &readings)
     {
         if (readings.empty())
             return 0;
@@ -53,38 +72,11 @@ namespace dorm_energy::handlers
 
         for (const auto &reading : readings)
         {
-            auto anomalyInfo = detector_->detect(reading);
-
-            if (anomalyInfo.isAnomaly)
-            {
-                processAnomaly(reading);
-                notifier_->sendAlert(reading,
-                                     anomalyInfo.severity,
-                                     anomalyInfo.description);
-            }
-
-            batch_.push_back(reading);
+            handle(reading);
             ++processed;
         }
 
-        const std::size_t BATCH_THRESHOLD = 100;
-        if (batch_.size() >= BATCH_THRESHOLD)
-        {
-            persistCurrentBatch();
-        }
-
         return processed;
-    }
-
-    void MessageHandler::processAnomaly(const core::SensorReading &reading)
-    {
-        auto info = detector_->detect(reading);
-
-        repository_->saveAnomaly(
-            reading,
-            info.anomalyType,
-            info.severity,
-            info.description);
     }
 
     void MessageHandler::flush()
@@ -97,10 +89,14 @@ namespace dorm_energy::handlers
         if (batch_.empty())
             return;
 
-        std::size_t saved = repository_->saveBatch(batch_);
+        std::size_t saved =
+            repository_->saveBatch(batch_);
 
-        std::cout << fmt::format("[MessageHandler] Saved {} readings to repository (batch size: {})\n",
-                                 saved, batch_.size());
+        std::cout
+            << fmt::format(
+                   "[MessageHandler] Saved {} readings to repository (batch size: {})\n",
+                   saved,
+                   batch_.size());
 
         batch_.clear();
     }

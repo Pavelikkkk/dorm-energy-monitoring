@@ -7,7 +7,7 @@
 
 namespace dorm_energy::detection
 {
-    struct AnomalyInfo
+    struct AnomalyInfo  // вынести в отдельный файл
     {
         bool isAnomaly = false;
         std::string anomalyType;

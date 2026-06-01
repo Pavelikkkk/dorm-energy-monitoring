@@ -5,7 +5,7 @@
 
 #include "dorm_energy/domain/logging/ilogger.hpp"
 #include "dorm_energy/domain/simulation/idata_generator.hpp"
-#include "dorm_energy/domain/detection/ianomaly_detector.hpp"
+#include "dorm_energy/domain/detection/istate_detector.hpp"
 #include "dorm_energy/domain/storage/imeasurement_repository.hpp"
 
 #include <memory>
@@ -22,7 +22,7 @@ namespace dorm_energy::application
         explicit SimulateCommand(
             std::shared_ptr<dorm_energy::logging::ILogger> logger,
             std::unique_ptr<dorm_energy::simulation::IDataGenerator> generator,
-            std::unique_ptr<dorm_energy::detection::IAnomalyDetector> detector,
+            std::unique_ptr<dorm_energy::detection::IStateDetector> detector,
             std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository);
 
         /**
@@ -35,7 +35,7 @@ namespace dorm_energy::application
     private:
         std::shared_ptr<dorm_energy::logging::ILogger> logger_;
         std::unique_ptr<dorm_energy::simulation::IDataGenerator> generator_;
-        std::unique_ptr<dorm_energy::detection::IAnomalyDetector> detector_;
+        std::unique_ptr<dorm_energy::detection::IStateDetector> detector_;
         std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository_;
     };
 

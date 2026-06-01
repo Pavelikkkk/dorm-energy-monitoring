@@ -10,4 +10,12 @@ find_package(libpqxx CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(PahoMqttCpp CONFIG REQUIRED)
 find_package(CURL CONFIG REQUIRED)
-find_package(onnxruntime CONFIG REQUIRED)
+
+set(ONNXRUNTIME_ROOT
+    ${PROJECT_SOURCE_DIR}/third_party/onnxruntime)
+
+set(ONNXRUNTIME_INCLUDE_DIR
+    ${ONNXRUNTIME_ROOT}/include)
+
+set(ONNXRUNTIME_LIB
+    ${ONNXRUNTIME_ROOT}/lib/onnxruntime.lib)

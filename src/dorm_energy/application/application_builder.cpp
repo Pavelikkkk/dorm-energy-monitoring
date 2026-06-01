@@ -4,7 +4,7 @@
 
 #include "dorm_energy/infrastructure/logging/spdlog_logger.hpp"
 #include "dorm_energy/infrastructure/simulation/synthetic_data_generator.hpp"
-#include "dorm_energy/infrastructure/detection/anomaly_detector.hpp"
+#include "dorm_energy/infrastructure/detection/rule_based_detector.hpp"
 #include "dorm_energy/infrastructure/storage/postgres_repository.hpp"
 #include "dorm_energy/infrastructure/handlers/message_handler.hpp"
 #include "dorm_energy/infrastructure/notifier/console_notifier.hpp"
@@ -42,9 +42,9 @@ namespace dorm_energy::application
             config_.getAnomalyRate());
     }
 
-    std::unique_ptr<detection::IAnomalyDetector> ApplicationBuilder::createDetector()
+    std::unique_ptr<detection::IStateDetector> ApplicationBuilder::createDetector()
     {
-        return std::make_unique<detection::AnomalyDetector>(25.0);
+        return std::make_unique<detection::RuleBasedDetector>(5.0);
     }
 
     std::shared_ptr<storage::IMeasurementRepository> ApplicationBuilder::createRepository()

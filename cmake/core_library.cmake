@@ -23,7 +23,9 @@ add_library(dorm_energy_core STATIC
     src/dorm_energy/infrastructure/notifier/telegram_poller.cpp
     src/dorm_energy/infrastructure/simulation/csv_exporter.cpp
     src/dorm_energy/infrastructure/detection/room_state_aggregator.cpp
-    
+    src/dorm_energy/infrastructure/detection/anomaly_tracker.cpp
+    src/dorm_energy/infrastructure/detection/onnx_detector.cpp
+
 
     # Application
     src/dorm_energy/application/config/app_config.cpp

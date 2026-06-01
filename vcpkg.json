@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Система мониторинга энергопотребления в общежитии",
   "homepage": "",
-  "license": "",
+  "license": "UNLICENSED",
   "dependencies": [
     "cli11",
     "spdlog",
@@ -12,8 +12,7 @@
     "libpqxx",
     "curl",
     "openssl",
-    "paho-mqtt-cpp",
-    "onnxruntime"
+    "paho-mqttpp3"
   ],
   "default-features": [],
   "features": {}

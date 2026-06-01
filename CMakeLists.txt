@@ -21,5 +21,8 @@ include(executable)
 # Дополнительно
 # ============================================
 
+message(STATUS "ONNX INCLUDE = ${ONNXRUNTIME_INCLUDE_DIR}")
+message(STATUS "ONNX LIB = ${ONNXRUNTIME_LIB}")
+
 message(STATUS "Project '${PROJECT_NAME}' configured successfully")
 message(STATUS "CXX Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

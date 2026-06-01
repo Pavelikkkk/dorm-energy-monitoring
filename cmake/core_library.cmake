@@ -25,6 +25,7 @@ add_library(dorm_energy_core STATIC
     src/dorm_energy/infrastructure/detection/room_state_aggregator.cpp
     src/dorm_energy/infrastructure/detection/anomaly_tracker.cpp
     src/dorm_energy/infrastructure/detection/onnx_detector.cpp
+    src/dorm_energy/infrastructure/detection/hybrid_detector.cpp
 
 
     # Application

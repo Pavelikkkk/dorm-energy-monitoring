@@ -29,7 +29,8 @@ namespace dorm_energy::storage
         bool saveAnomaly(const core::SensorReading &reading,
                          const std::string &anomalyType,
                          core::AlertSeverity severity,
-                         const std::string &description) override;
+                         const std::string &description,
+                         double score) override;
 
         void flush() override;
 

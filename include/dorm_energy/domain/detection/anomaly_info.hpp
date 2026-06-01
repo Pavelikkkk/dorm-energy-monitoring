@@ -4,11 +4,16 @@
 
 namespace dorm_energy::detection
 {
-    struct AnomalyInfo 
+    struct AnomalyInfo
     {
-        bool isAnomaly = false;
+        bool isAnomaly{false};
+
         std::string anomalyType;
-        core::AlertSeverity severity = core::AlertSeverity::Warning;
+
         std::string description;
+
+        core::AlertSeverity severity;
+
+        float score{0.0f};
     };
 } // namespace dorm_energy::detection

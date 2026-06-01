@@ -10,6 +10,8 @@
 #include "dorm_energy/infrastructure/notifier/console_notifier.hpp"
 #include "dorm_energy/infrastructure/mqtt/mqtt_client.hpp"
 #include "dorm_energy/infrastructure/cli/cli_parser.hpp"
+#include "dorm_energy/infrastructure/detection/onnx_detector.hpp"
+#include "dorm_energy/infrastructure/detection/hybrid_detector.hpp"
 
 namespace dorm_energy::application
 {
@@ -44,7 +46,20 @@ namespace dorm_energy::application
 
     std::unique_ptr<detection::IStateDetector> ApplicationBuilder::createDetector()
     {
-        return std::make_unique<detection::RuleBasedDetector>(5.0);
+        auto ruleDetector =
+            std::make_unique<
+                detection::RuleBasedDetector>(
+                25.0);
+
+        auto mlDetector =
+            std::make_unique<
+                detection::OnnxDetector>(
+                "../../ml/models/anomaly_autoencoder.onnx");
+
+        return std::make_unique<
+            detection::HybridDetector>(
+            std::move(ruleDetector),
+            std::move(mlDetector));
     }
 
     std::shared_ptr<storage::IMeasurementRepository> ApplicationBuilder::createRepository()

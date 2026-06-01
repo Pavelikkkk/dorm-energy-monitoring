@@ -1,7 +1,7 @@
 #pragma once
 
-#include "dorm_energy/core/room_state.hpp"
-#include "dorm_energy/domain/detection/anomaly_info.hpp" // 
+#include "dorm_energy/domain/detection/anomaly_info.hpp"
+#include "dorm_energy/core/detection_context.hpp"
 
 namespace dorm_energy::detection
 {
@@ -12,10 +12,10 @@ namespace dorm_energy::detection
         virtual ~IStateDetector() = default;
 
         virtual bool isAnomaly(
-            const core::RoomState &state) const = 0;
+            const DetectionContext &context) const = 0;
 
         virtual AnomalyInfo detect(
-            const core::RoomState &state) const = 0;
+            const DetectionContext &context) const = 0;
     };
 
 }

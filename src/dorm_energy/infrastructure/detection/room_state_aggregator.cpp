@@ -1,7 +1,5 @@
 #include "dorm_energy/infrastructure/detection/room_state_aggregator.hpp"
 
-#include <optional>
-
 namespace dorm_energy::detection
 {
 
@@ -34,7 +32,46 @@ namespace dorm_energy::detection
                 reading.value;
         }
 
+        auto &roomHistory =
+            history_[reading.deviceId];
+
+        roomHistory.push_back(state);
+
+        while (!roomHistory.empty())
+        {
+            auto age =
+                state.timestamp -
+                roomHistory.front().timestamp;
+
+            if (age > std::chrono::minutes(30))
+            {
+                roomHistory.pop_front();
+            }
+            else
+            {
+                break;
+            }
+        }
+
         return state;
     }
 
-}
+    const std::deque<core::RoomState> &
+    RoomStateAggregator::getHistory(
+        const std::string &roomId) const
+    {
+        static const std::deque<core::RoomState>
+            emptyHistory;
+
+        auto it =
+            history_.find(roomId);
+
+        if (it == history_.end())
+        {
+            return emptyHistory;
+        }
+
+        return it->second;
+    }
+
+} // namespace dorm_energy::detection

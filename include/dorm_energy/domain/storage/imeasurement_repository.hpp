@@ -22,7 +22,8 @@ namespace dorm_energy::storage
         virtual bool saveAnomaly(const core::SensorReading &reading,
                                  const std::string &anomalyType,
                                  core::AlertSeverity severity,
-                                 const std::string &description) = 0;
+                                 const std::string &description,
+                                 double score = 0.0) = 0;
 
         // virtual void shutdown() = 0;
     };

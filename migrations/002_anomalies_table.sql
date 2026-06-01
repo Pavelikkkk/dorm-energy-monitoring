@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS anomalies (
 
     anomaly_type    TEXT            NOT NULL,
     severity        TEXT            NOT NULL,
+
+    score           DOUBLE PRECISION DEFAULT 0,
+    
     detected_at     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     
     description     TEXT,

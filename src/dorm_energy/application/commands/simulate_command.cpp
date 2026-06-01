@@ -5,11 +5,12 @@
 #include "dorm_energy/domain/simulation/idata_generator.hpp"
 #include "dorm_energy/domain/storage/imeasurement_repository.hpp"
 #include "dorm_energy/domain/logging/ilogger.hpp"
+#include "dorm_energy/core/detection_context.hpp"
+#include "dorm_energy/infrastructure/detection/anomaly_tracker.hpp"
 
 #include "dorm_energy/infrastructure/detection/room_state_aggregator.hpp"
 #include "dorm_energy/infrastructure/simulation/csv_exporter.hpp"
 
-#include <fmt/format.h>
 #include <iostream>
 
 namespace dorm_energy::application
@@ -60,9 +61,13 @@ namespace dorm_energy::application
             "../../data/training_dataset.csv");
 
         detection::RoomStateAggregator aggregator;
+        detection::AnomalyTracker tracker;
 
         int anomalyCount = 0;
         int savedAnomalies = 0;
+
+        int ruleCount = 0;
+        int mlCount = 0;
 
         for (const auto &reading : batch)
         {
@@ -72,20 +77,47 @@ namespace dorm_energy::application
             if (!state.has_value())
                 continue;
 
+            detection::DetectionContext context;
+
+            context.current =
+                *state;
+
+            context.history =
+                &aggregator.getHistory(
+                    state->roomId);
+
             auto info =
-                detector_->detect(*state);
+                detector_->detect(context);
 
             if (!info.isAnomaly)
+            {
                 continue;
+            }
+
+            if (!tracker.shouldReport(
+                    *state,
+                    info))
+            {
+                continue;
+            }
 
             ++anomalyCount;
 
+            if (info.anomalyType.starts_with("rule_"))
+            {
+                ++ruleCount;
+            }
+            else if (info.anomalyType == "ml_anomaly")
+            {
+                ++mlCount;
+            }
             bool success =
                 repository_->saveAnomaly(
                     reading,
                     info.anomalyType,
                     info.severity,
-                    info.description);
+                    info.description,
+                    info.score);
 
             if (success)
                 ++savedAnomalies;
@@ -95,12 +127,22 @@ namespace dorm_energy::application
                 << state->roomId
                 << " -> "
                 << info.anomalyType
+                << " score="
+                << info.score
                 << '\n';
         }
 
         logger_->info(
             "Detected anomalies: " +
             std::to_string(anomalyCount));
+
+        logger_->info(
+            "Rule anomalies: " +
+            std::to_string(ruleCount));
+
+        logger_->info(
+            "ML anomalies: " +
+            std::to_string(mlCount));
 
         logger_->info(
             "Saved anomalies: " +

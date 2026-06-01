@@ -8,6 +8,7 @@
 #include "dorm_energy/application/imessage_handler.hpp"
 #include "dorm_energy/core/measurement.hpp"
 #include "dorm_energy/infrastructure/detection/rule_based_detector.hpp"
+#include "dorm_energy/infrastructure/detection/anomaly_tracker.hpp"
 
 namespace dorm_energy::handlers
 {
@@ -29,7 +30,8 @@ namespace dorm_energy::handlers
         std::unique_ptr<dorm_energy::detection::IStateDetector> detector_;
         std::shared_ptr<dorm_energy::storage::IMeasurementRepository> repository_;
         std::unique_ptr<dorm_energy::application::INotifier> notifier_;
-        dorm_energy::detection::RoomStateAggregator aggregator_;
+        dorm_energy::detection::RoomStateAggregator aggregator_; // нужли ли умные указатели
+        detection::AnomalyTracker tracker_;
 
         void persistCurrentBatch();
 

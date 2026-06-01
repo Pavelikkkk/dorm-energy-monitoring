@@ -1,7 +1,8 @@
 #include "dorm_energy/infrastructure/handlers/message_handler.hpp"
+#include "dorm_energy/core/detection_context.hpp"
 
-#include <fmt/format.h>
 #include <iostream>
+#include <fmt/format.h>
 
 namespace dorm_energy::handlers
 {
@@ -37,27 +38,49 @@ namespace dorm_energy::handlers
         auto state =
             aggregator_.update(reading);
 
-        if (!state.has_value())
+        if (!state)
         {
             return true;
         }
 
+        detection::DetectionContext context;
+
+        context.current =
+            *state;
+
+        context.history =
+            &aggregator_.getHistory(
+                state->roomId);
+
         auto anomalyInfo =
-            detector_->detect(*state);
+            detector_->detect(context);
 
-        if (anomalyInfo.isAnomaly)
+        if (!anomalyInfo.isAnomaly)
         {
-            repository_->saveAnomaly(
-                reading,
-                anomalyInfo.anomalyType,
-                anomalyInfo.severity,
-                anomalyInfo.description);
+            tracker_.resolveRoom(
+                state->roomId);
 
-            notifier_->sendAlert(
-                reading,
-                anomalyInfo.severity,
-                anomalyInfo.description);
+            return true;
         }
+
+        if (!tracker_.shouldReport(
+                *state,
+                anomalyInfo))
+        {
+            return true;
+        }
+
+        repository_->saveAnomaly(
+            reading,
+            anomalyInfo.anomalyType,
+            anomalyInfo.severity,
+            anomalyInfo.description,
+            anomalyInfo.score);
+
+        notifier_->sendAlert(
+            reading,
+            anomalyInfo.severity,
+            anomalyInfo.description);
 
         return true;
     }

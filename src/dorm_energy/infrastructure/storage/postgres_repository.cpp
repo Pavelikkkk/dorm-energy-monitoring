@@ -160,7 +160,8 @@ namespace dorm_energy::storage
         const core::SensorReading &reading,
         const std::string &anomalyType,
         core::AlertSeverity severity,
-        const std::string &description)
+        const std::string &description,
+        double score)
     {
         try
         {
@@ -178,8 +179,8 @@ namespace dorm_energy::storage
             txn.exec(
                 R"(INSERT INTO anomalies 
             (recorded_at, device_id, sensor_type, numeric_value, bool_value, unit,
-             anomaly_type, severity, description)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9))",
+             anomaly_type, severity, description, score)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10))",
                 pqxx::params{
                     ts,
                     reading.deviceId,
@@ -189,11 +190,11 @@ namespace dorm_energy::storage
                     reading.unit,
                     anomalyType,
                     core::toString(severity),
-                    description});
+                    description,
+                    score});
 
             txn.commit();
 
-            // Исправленная строка:
             std::cout << fmt::format("[Postgres] Anomaly saved: {} - {} ({})\n",
                                      anomalyType,
                                      reading.deviceId,

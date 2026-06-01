@@ -3,6 +3,7 @@
 #include "dorm_energy/core/room_state.hpp"
 #include "dorm_energy/core/measurement.hpp"
 
+#include <deque>
 #include <optional>
 #include <unordered_map>
 
@@ -15,11 +16,19 @@ namespace dorm_energy::detection
         std::optional<core::RoomState> update(
             const core::SensorReading &reading);
 
+        const std::deque<core::RoomState> &getHistory(
+            const std::string &roomId) const;
+
     private:
         std::unordered_map<
             std::string,
             core::RoomState>
             states_;
+
+        std::unordered_map<
+            std::string,
+            std::deque<core::RoomState>>
+            history_;
     };
 
-} // namespace dorm_energy::detection
+}

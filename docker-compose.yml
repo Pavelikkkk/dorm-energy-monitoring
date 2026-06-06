@@ -2,16 +2,34 @@ services:
   timescaledb:
     image: timescale/timescaledb:latest-pg16
     container_name: dorm-timescaledb
-    restart: unless-stopped
+
     ports:
       - "5432:5432"
+
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}   
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-dorm_energy}
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: dorm_energy
+
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
       - ./migrations:/docker-entrypoint-initdb.d
+
+  grafana:
+    image: grafana/grafana-oss
+    container_name: dorm-grafana
+
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+
+    depends_on:
+      - timescaledb
 
 volumes:
   timescaledb_data:

@@ -26,6 +26,7 @@ add_library(dorm_energy_core STATIC
     src/dorm_energy/infrastructure/detection/anomaly_tracker.cpp
     src/dorm_energy/infrastructure/detection/onnx_detector.cpp
     src/dorm_energy/infrastructure/detection/hybrid_detector.cpp
+    src/dorm_energy/infrastructure/web/server/web_server.cpp
 
 
     # Application
@@ -55,5 +56,6 @@ target_link_libraries(dorm_energy_core
         OpenSSL::Crypto
         PahoMqttCpp::paho-mqttpp3
         CURL::libcurl
+        Drogon::Drogon
         ${ONNXRUNTIME_LIB}
 )

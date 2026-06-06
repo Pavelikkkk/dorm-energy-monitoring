@@ -1,30 +1,41 @@
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-function App() {
+import MainLayout from "./layouts/MainLayout";
+
+import Home from "./pages/Home";
+import Analytics from "./pages/Analytics";
+import Buildings from "./pages/Buildings";
+import Devices from "./pages/Devices";
+import Anomalies from "./pages/Anomalies";
+
+export default function App() {
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-8">
-      <h1 className="text-5xl font-bold mb-8">
-        Dorm Energy Monitoring
-      </h1>
+    <BrowserRouter>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<Home />} />
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-slate-800 rounded-xl p-6">
-          <h2 className="text-slate-400">Rooms</h2>
-          <p className="text-3xl font-bold">6</p>
-        </div>
+          <Route
+            path="/buildings"
+            element={<Buildings />}
+          />
 
-        <div className="bg-slate-800 rounded-xl p-6">
-          <h2 className="text-slate-400">Alerts</h2>
-          <p className="text-3xl font-bold">3</p>
-        </div>
+          <Route
+            path="/analytics"
+            element={<Analytics />}
+          />
 
-        <div className="bg-slate-800 rounded-xl p-6">
-          <h2 className="text-slate-400">ML Alerts</h2>
-          <p className="text-3xl font-bold">1</p>
-        </div>
-      </div>
-    </div>
-  )
+          <Route
+            path="/devices"
+            element={<Devices />}
+          />
+
+          <Route
+            path="/anomalies"
+            element={<Anomalies />}
+          />
+        </Routes>
+      </MainLayout>
+    </BrowserRouter>
+  );
 }
-
-export default App

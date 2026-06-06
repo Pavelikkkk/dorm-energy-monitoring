@@ -12,7 +12,8 @@
     "libpqxx",
     "curl",
     "openssl",
-    "paho-mqttpp3"
+    "paho-mqttpp3",
+    "drogon"
   ],
   "default-features": [],
   "features": {}

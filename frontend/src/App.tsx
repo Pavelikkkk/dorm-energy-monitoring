@@ -7,6 +7,7 @@ import Analytics from "./pages/Analytics";
 import Buildings from "./pages/Buildings";
 import Devices from "./pages/Devices";
 import Anomalies from "./pages/Anomalies";
+import BuildingDetails from "./pages/BuildingDetails";
 
 export default function App() {
   return (
@@ -33,6 +34,11 @@ export default function App() {
           <Route
             path="/anomalies"
             element={<Anomalies />}
+          />
+
+          <Route
+            path="/buildings/:id"
+            element={<BuildingDetails />}
           />
         </Routes>
       </MainLayout>

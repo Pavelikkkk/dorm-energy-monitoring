@@ -186,50 +186,34 @@ namespace dorm_energy::web
             {
                 Json::Value rooms(Json::arrayValue);
 
-                const auto &states =
-                    aggregator_->getCurrentStates();
+                auto list =
+                    repository_->getRooms();
 
-                for (const auto &[roomId, state] : states)
+                for (const auto &r : list)
                 {
                     Json::Value room;
 
-                    room["roomId"] =
-                        state.roomId;
+                    room["id"] =
+                        r.id;
 
-                    room["power"] =
-                        state.power;
+                    room["buildingId"] =
+                        r.buildingId;
 
-                    room["light"] =
-                        state.light;
+                    room["roomName"] =
+                        r.roomName;
 
-                    room["motion"] =
-                        state.motion;
+                    room["roomType"] =
+                        r.roomType;
 
-                    std::string status =
-                        "NORMAL";
-
-                    if (!state.motion &&
-                        state.power > 150)
-                    {
-                        status =
-                            "WARNING";
-                    }
-
-                    if (!state.motion &&
-                        state.power > 250)
-                    {
-                        status =
-                            "CRITICAL";
-                    }
-
-                    room["status"] =
-                        status;
+                    room["floorNumber"] =
+                        r.floorNumber;
 
                     rooms.append(room);
                 }
 
                 auto response =
-                    drogon::HttpResponse::newHttpJsonResponse(rooms);
+                    drogon::HttpResponse::newHttpJsonResponse(
+                        rooms);
 
                 response->addHeader(
                     "Access-Control-Allow-Origin",

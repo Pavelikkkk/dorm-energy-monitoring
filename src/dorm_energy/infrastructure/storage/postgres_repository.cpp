@@ -396,4 +396,49 @@ namespace dorm_energy::storage
 
         return result;
     }
+
+    std::vector<storage::RoomDto>
+    PostgresMeasurementRepository::getRooms()
+    {
+        std::vector<RoomDto> result;
+
+        pqxx::work txn(*connection_);
+
+        auto rows =
+            txn.exec(
+                R"(
+            SELECT
+                id,
+                building_id,
+                room_name,
+                room_type,
+                floor_number
+            FROM rooms
+            ORDER BY room_name
+            )");
+
+        for (const auto &row : rows)
+        {
+            RoomDto dto;
+
+            dto.id =
+                row["id"].as<int>();
+
+            dto.buildingId =
+                row["building_id"].as<int>();
+
+            dto.roomName =
+                row["room_name"].c_str();
+
+            dto.roomType =
+                row["room_type"].c_str();
+
+            dto.floorNumber =
+                row["floor_number"].as<int>();
+
+            result.push_back(dto);
+        }
+
+        return result;
+    }
 } // namespace dorm_energy::storage

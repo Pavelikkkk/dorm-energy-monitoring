@@ -5,17 +5,16 @@ import {
   getHealth,
   getAnomalies,
   getRooms,
+  getDevices,
 } from "../services/api";
 
 import StatCard from "../components/StatCard";
 import AlertCard from "../components/AlertCard";
 import StatusBadge from "../components/StatusBadge";
 import PowerChart from "../components/PowerChart";
-import TopRooms from "../components/TopRooms";
 
 import TopConsumersChart from "../components/TopConsumersChart";
 import AnomaliesChart from "../components/AnomaliesChart";
-import EnergyByRoomChart from "../components/EnergyByRoomChart";
 import SeverityDistributionChart from "../components/SeverityDistributionChart";
 
 export default function Analytics() {
@@ -26,6 +25,9 @@ export default function Analytics() {
     mqttOnline: false,
   });
 
+  const [devices, setDevices] =
+    useState<any[]>([]);
+
   const [health, setHealth] = useState({
     mqtt: false,
     database: false,
@@ -34,9 +36,6 @@ export default function Analytics() {
   });
 
   const [anomalies, setAnomalies] =
-    useState<any[]>([]);
-
-  const [rooms, setRooms] =
     useState<any[]>([]);
 
   useEffect(() => {
@@ -49,32 +48,23 @@ export default function Analytics() {
         statsData,
         healthData,
         anomaliesData,
-        roomsData,
+        devicesData,
       ] = await Promise.all([
         getStats(),
         getHealth(),
         getAnomalies(),
-        getRooms(),
+        getDevices(),
       ]);
 
       setStats(statsData);
 
       setHealth(healthData);
 
+      setDevices(devicesData);
+
       setAnomalies(
         anomaliesData.slice(0, 5)
       );
-
-      const sortedRooms =
-        [...roomsData]
-          .sort(
-            (a: any, b: any) =>
-              (b.power ?? 0) -
-              (a.power ?? 0)
-          )
-          .slice(0, 5);
-
-      setRooms(sortedRooms);
     }
     catch (error) {
       console.error(error);
@@ -82,18 +72,43 @@ export default function Analytics() {
   }
 
   return (
-    <>
-      <h1 className="text-4xl font-bold mb-8">
-        Analytics Dashboard
-      </h1>
+    <div className="space-y-8">
+
+      {/* HEADER */}
+
+      <div>
+
+        <h1 className="text-5xl font-bold mb-3">
+          Analytics Dashboard
+        </h1>
+
+        <p className="text-slate-400">
+          Real-time energy monitoring and
+          anomaly detection analytics.
+        </p>
+
+      </div>
 
       {/* STATS */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+      <div
+        className="
+          grid
+          grid-cols-1
+          md:grid-cols-2
+          xl:grid-cols-4
+          gap-4
+        "
+      >
 
         <StatCard
           title="Rooms"
           value={stats.rooms}
+        />
+
+        <StatCard
+          title="Devices"
+          value={devices.length}
         />
 
         <StatCard
@@ -102,12 +117,7 @@ export default function Analytics() {
         />
 
         <StatCard
-          title="ML Alerts"
-          value={stats.mlAlerts}
-        />
-
-        <StatCard
-          title="MQTT"
+          title="Server"
           value={
             stats.mqttOnline
               ? "Online"
@@ -117,63 +127,38 @@ export default function Analytics() {
 
       </div>
 
-      {/* ANOMALIES + TOP ROOMS */}
+      {/* POWER */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div>
 
-        <div>
+        <h2 className="text-3xl font-bold mb-4">
+          Power Consumption
+        </h2>
 
-          <h2 className="text-3xl font-bold mb-4">
-            Latest Anomalies
-          </h2>
-
-          <div className="grid gap-4">
-
-            {anomalies.length === 0 && (
-              <div className="bg-slate-800 rounded-xl p-6 text-slate-400">
-                No anomalies detected
-              </div>
-            )}
-
-            {anomalies.map(
-              (anomaly, index) => (
-                <AlertCard
-                  key={`${anomaly.room}-${anomaly.type}-${index}`}
-                  room={anomaly.room}
-                  type={anomaly.type}
-                  severity={anomaly.severity}
-                  score={anomaly.score}
-                  status={
-                    anomaly.status ??
-                    "ACTIVE"
-                  }
-                />
-              )
-            )}
-
-          </div>
-
+        <div
+          className="
+            bg-slate-800
+            border
+            border-slate-700
+            rounded-2xl
+            p-6
+          "
+        >
+          <PowerChart />
         </div>
 
-        <TopRooms rooms={rooms} />
-
       </div>
 
-      {/* POWER HISTORY */}
+      {/* CHARTS */}
 
-      <h2 className="text-3xl font-bold mb-4">
-        Power Consumption
-      </h2>
-
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-8">
-
-        <PowerChart />
-
-      </div>
-
-      {/* ANALYTICS BLOCK 1 */}
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+      <div
+        className="
+          grid
+          grid-cols-1
+          xl:grid-cols-2
+          gap-6
+        "
+      >
 
         <TopConsumersChart />
 
@@ -181,46 +166,120 @@ export default function Analytics() {
 
       </div>
 
-      {/* ANALYTICS BLOCK 2 */}
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-
-        <EnergyByRoomChart />
+      <div
+        className="
+          grid
+          grid-cols-1
+          xl:grid-cols-1
+          gap-6
+        "
+      >
 
         <SeverityDistributionChart />
 
       </div>
 
-      {/* SYSTEM STATUS */}
+      {/* SYSTEM */}
 
-      <h2 className="text-3xl font-bold mb-4">
-        System Status
-      </h2>
+      <div>
 
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+        <h2 className="text-3xl font-bold mb-4">
+          System Health
+        </h2>
 
-        <div className="flex justify-between py-2">
-          <span>MQTT Broker</span>
-          <StatusBadge online={health.mqtt} />
-        </div>
+        <div
+          className="
+            grid
+            grid-cols-1
+            md:grid-cols-2
+            xl:grid-cols-4
+            gap-4
+          "
+        >
 
-        <div className="flex justify-between py-2">
-          <span>TimescaleDB</span>
-          <StatusBadge online={health.database} />
-        </div>
+          <div className="bg-slate-800 rounded-2xl p-6">
 
-        <div className="flex justify-between py-2">
-          <span>Hybrid Detector</span>
-          <StatusBadge online={health.detector} />
-        </div>
+            <p className="text-slate-400 mb-2">
+              Database
+            </p>
 
-        <div className="flex justify-between py-2">
-          <span>Telegram</span>
-          <StatusBadge online={health.telegram} />
+            <StatusBadge
+              online={health.database}
+            />
+
+          </div>
+
+          <div className="bg-slate-800 rounded-2xl p-6">
+
+            <p className="text-slate-400 mb-2">
+              ML Engine
+            </p>
+
+            <StatusBadge
+              online={health.detector}
+            />
+
+          </div>
+
+          <div className="bg-slate-800 rounded-2xl p-6">
+
+            <p className="text-slate-400 mb-2">
+              Notifications
+            </p>
+
+            <StatusBadge
+              online={health.telegram}
+            />
+
+          </div>
+
         </div>
 
       </div>
 
-    </>
+      {/* LATEST ANOMALIES */}
+
+      <div>
+
+        <h2 className="text-3xl font-bold mb-4">
+          Latest Anomalies
+        </h2>
+
+        <div className="grid gap-4">
+
+          {anomalies.length === 0 && (
+            <div
+              className="
+                bg-slate-800
+                rounded-2xl
+                p-6
+                text-slate-400
+              "
+            >
+              No anomalies detected
+            </div>
+          )}
+
+          {anomalies.map(
+            (anomaly, index) => (
+              <AlertCard
+                key={`${anomaly.room}-${anomaly.type}-${index}`}
+                room={anomaly.room}
+                type={anomaly.type}
+                severity={anomaly.severity}
+                score={anomaly.score}
+                status={
+                  anomaly.status ??
+                  "ACTIVE"
+                }
+              />
+            )
+          )}
+
+        </div>
+
+      </div>
+
+    </div>
   );
 }

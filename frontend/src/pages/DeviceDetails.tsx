@@ -63,40 +63,85 @@ export default function DeviceDetails() {
   {
     return (
       <div>
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-4xl font-bold">
           Device not found
         </h1>
-
-        <p className="text-slate-400 mt-2">
-          Device ID: {id}
-        </p>
       </div>
     );
   }
 
   return (
-    <>
-      <h1 className="text-4xl font-bold mb-2">
-        {device.deviceName}
-      </h1>
+    <div className="space-y-8">
 
-      <p className="text-slate-400 mb-8">
-        Room: {device.roomName}
-      </p>
+      {/* HEADER */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+      <div>
 
-        <div className="bg-slate-800 rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-3">
+
+          <span
+            className={
+              device.isOnline
+                ? "text-green-400 text-2xl"
+                : "text-red-400 text-2xl"
+            }
+          >
+            ●
+          </span>
+
+          <h1 className="text-5xl font-bold">
+            {device.deviceName}
+          </h1>
+
+        </div>
+
+        <p className="text-slate-400 text-lg">
+          {device.roomName}
+        </p>
+
+      </div>
+
+      {/* STATS */}
+
+      <div
+        className="
+          grid
+          grid-cols-1
+          md:grid-cols-2
+          xl:grid-cols-4
+          gap-4
+        "
+      >
+
+        <div
+          className="
+            bg-slate-800
+            rounded-2xl
+            p-6
+          "
+        >
           <p className="text-slate-400">
             Device ID
           </p>
 
-          <h2 className="text-xl font-bold text-cyan-400">
+          <h2
+            className="
+              text-xl
+              font-bold
+              text-orange-300
+            "
+          >
             {device.deviceId}
           </h2>
         </div>
 
-        <div className="bg-slate-800 rounded-xl p-6">
+        <div
+          className="
+            bg-slate-800
+            rounded-2xl
+            p-6
+          "
+        >
           <p className="text-slate-400">
             Model
           </p>
@@ -106,7 +151,13 @@ export default function DeviceDetails() {
           </h2>
         </div>
 
-        <div className="bg-slate-800 rounded-xl p-6">
+        <div
+          className="
+            bg-slate-800
+            rounded-2xl
+            p-6
+          "
+        >
           <p className="text-slate-400">
             Firmware
           </p>
@@ -116,7 +167,13 @@ export default function DeviceDetails() {
           </h2>
         </div>
 
-        <div className="bg-slate-800 rounded-xl p-6">
+        <div
+          className="
+            bg-slate-800
+            rounded-2xl
+            p-6
+          "
+        >
           <p className="text-slate-400">
             Status
           </p>
@@ -124,27 +181,40 @@ export default function DeviceDetails() {
           <h2
             className={
               device.isOnline
-                ? "text-green-400 font-bold"
-                : "text-red-400 font-bold"
+                ? "text-xl font-bold text-green-400"
+                : "text-xl font-bold text-red-400"
             }
           >
-            {device.isOnline
-              ? "ONLINE"
-              : "OFFLINE"}
+            {
+              device.isOnline
+                ? "ONLINE"
+                : "OFFLINE"
+            }
           </h2>
         </div>
 
       </div>
 
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+      {/* DEVICE INFORMATION */}
+
+      <div
+        className="
+          bg-slate-800
+          border
+          border-slate-700
+          rounded-2xl
+          p-6
+        "
+      >
 
         <h2 className="text-2xl font-bold mb-6">
           Device Information
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
 
           <div className="flex justify-between">
+
             <span className="text-slate-400">
               Device Name
             </span>
@@ -152,9 +222,11 @@ export default function DeviceDetails() {
             <span>
               {device.deviceName}
             </span>
+
           </div>
 
           <div className="flex justify-between">
+
             <span className="text-slate-400">
               Room
             </span>
@@ -162,19 +234,23 @@ export default function DeviceDetails() {
             <span>
               {device.roomName}
             </span>
+
           </div>
 
           <div className="flex justify-between">
+
             <span className="text-slate-400">
-              Model
+              Device Model
             </span>
 
             <span>
               {device.deviceModel}
             </span>
+
           </div>
 
           <div className="flex justify-between">
+
             <span className="text-slate-400">
               Firmware
             </span>
@@ -182,21 +258,28 @@ export default function DeviceDetails() {
             <span>
               {device.firmwareVersion}
             </span>
+
           </div>
 
           <div className="flex justify-between">
+
             <span className="text-slate-400">
               Last Seen
             </span>
 
             <span>
-              {device.lastSeenAt || "N/A"}
+              {
+                device.lastSeenAt ||
+                "N/A"
+              }
             </span>
+
           </div>
 
         </div>
 
       </div>
-    </>
+
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 
-import MainLayout from "./layouts/MainLayout";
-
+import DashboardLayout from "./layouts/DashboardLayout";
 import Home from "./pages/Home";
 import Analytics from "./pages/Analytics";
 import Buildings from "./pages/Buildings";
@@ -9,44 +8,81 @@ import Devices from "./pages/Devices";
 import Anomalies from "./pages/Anomalies";
 import BuildingDetails from "./pages/BuildingDetails";
 import DeviceDetails from "./pages/DeviceDetails";
+import MainLayout from "./layouts/MainLayout";
+import BuildingAnalytics from "./pages/BuildingAnalytics";
+
 
 export default function App() {
   return (
     <HashRouter>
-      <MainLayout>
-        <Routes>
-          <Route path="/" element={<Home />} />
 
-          <Route
-            path="/buildings"
-            element={<Buildings />}
-          />
+      <Routes>
 
-          <Route
-            path="/analytics"
-            element={<Analytics />}
-          />
+        <Route
+          path="/"
+          element={
+            <MainLayout>
+              <Home />
+            </MainLayout>
+          }
+        />
 
-          <Route
-            path="/devices"
-            element={<Devices />}
-          />
+        <Route
+          path="/buildings"
+          element={
+            <DashboardLayout>
+              <Buildings />
+            </DashboardLayout>
+          }
+        />
 
-          <Route
-            path="/anomalies"
-            element={<Anomalies />}
-          />
+        <Route
+          path="/devices"
+          element={
+            <DashboardLayout>
+              <Devices />
+            </DashboardLayout>
+          }
+        />
 
-          <Route
-            path="/buildings/:id"
-            element={<BuildingDetails />}
-          />
-          <Route
-            path="/devices/:id"
-            element={<DeviceDetails />}
-          />
-        </Routes>
-      </MainLayout>
+        <Route
+          path="/anomalies"
+          element={
+            <DashboardLayout>
+              <Anomalies />
+            </DashboardLayout>
+          }
+        />
+
+        <Route
+          path="/buildings/:id"
+          element={
+            <DashboardLayout>
+              <BuildingDetails />
+            </DashboardLayout>
+          }
+        />
+
+        <Route
+          path="/devices/:id"
+          element={
+            <DashboardLayout>
+              <DeviceDetails />
+            </DashboardLayout>
+          }
+        />
+
+        <Route
+          path="/buildings/:id/analytics"
+          element={
+            <DashboardLayout>
+              <BuildingAnalytics />
+            </DashboardLayout>
+          }
+        />
+
+      </Routes>
+
     </HashRouter>
   );
 }

@@ -17,6 +17,16 @@ export default function Devices() {
   const [devices, setDevices] =
     useState<Device[]>([]);
 
+  const [search, setSearch] =
+    useState("");
+
+  const [statusFilter, setStatusFilter] =
+    useState<
+      "all" |
+      "online" |
+      "offline"
+    >("all");
+
   useEffect(() => {
     loadDevices();
   }, []);
@@ -33,80 +43,287 @@ export default function Devices() {
     }
   }
 
+  const filteredDevices =
+    devices.filter((device) => {
+
+      const matchesSearch =
+        device.deviceName
+          .toLowerCase()
+          .includes(
+            search.toLowerCase()
+          );
+
+      const matchesStatus =
+        statusFilter === "all"
+        || (
+          statusFilter === "online"
+          && device.isOnline
+        )
+        || (
+          statusFilter === "offline"
+          && !device.isOnline
+        );
+
+      return (
+        matchesSearch &&
+        matchesStatus
+      );
+    });
+
+  const onlineCount =
+    devices.filter(
+      (d) => d.isOnline
+    ).length;
+
+  const offlineCount =
+    devices.filter(
+      (d) => !d.isOnline
+    ).length;
+
   return (
-    <>
-      <h1 className="text-4xl font-bold mb-8">
-        Devices
-      </h1>
+    <div className="space-y-8">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {/* HEADER */}
 
-        {devices.map((device) => (
-          <Link
-            key={device.deviceId}
-            to={`/devices/${device.deviceId}`}
-            className="
-              block
-              bg-slate-800
-              border
-              border-slate-700
-              rounded-xl
-              p-6
-              hover:border-cyan-500
-              transition
-            "
-          >
-            <div className="flex justify-between mb-4">
+      <div>
 
-              <h2 className="text-xl font-bold text-cyan-400">
-                {device.deviceName}
-              </h2>
+        <h1 className="text-5xl font-bold mb-3">
+          Devices
+        </h1>
 
-              <span
-                className={
-                  device.isOnline
-                    ? "text-green-400"
-                    : "text-red-400"
-                }
-              >
-                ●
-              </span>
-
-            </div>
-
-            <div className="space-y-2">
-
-              <div>
-                <span className="text-slate-400">
-                  Room:
-                </span>{" "}
-                {device.roomName}
-              </div>
-
-              <div>
-                <span className="text-slate-400">
-                  Model:
-                </span>{" "}
-                {device.deviceModel}
-              </div>
-
-              <div>
-                <span className="text-slate-400">
-                  Firmware:
-                </span>{" "}
-                {device.firmwareVersion}
-              </div>
-
-            </div>
-
-            <div className="mt-4 text-cyan-400 text-sm font-semibold">
-              View Device →
-            </div>
-
-          </Link>
-        ))}
+        <p className="text-slate-400">
+          Monitor and manage IoT devices.
+        </p>
 
       </div>
-    </>
+
+      {/* STATS */}
+
+      <div
+        className="
+          grid
+          grid-cols-1
+          md:grid-cols-3
+          gap-4
+        "
+      >
+
+        <div
+          className="
+            bg-slate-800
+            rounded-2xl
+            p-6
+          "
+        >
+          <p className="text-slate-400">
+            📡 Devices
+          </p>
+
+          <h2 className="text-3xl font-bold">
+            {devices.length}
+          </h2>
+        </div>
+
+        <div
+          className="
+            bg-slate-800
+            rounded-2xl
+            p-6
+          "
+        >
+          <p className="text-slate-400">
+            🟢 Online
+          </p>
+
+          <h2 className="text-3xl font-bold text-green-400">
+            {onlineCount}
+          </h2>
+        </div>
+
+        <div
+          className="
+            bg-slate-800
+            rounded-2xl
+            p-6
+          "
+        >
+          <p className="text-slate-400">
+            🔴 Offline
+          </p>
+
+          <h2 className="text-3xl font-bold text-red-400">
+            {offlineCount}
+          </h2>
+        </div>
+
+      </div>
+
+      {/* SEARCH */}
+
+      <input
+        type="text"
+        placeholder="Search devices..."
+        value={search}
+        onChange={(e) =>
+          setSearch(
+            e.target.value
+          )
+        }
+        className="
+          w-full
+          bg-slate-800
+          border
+          border-slate-700
+          rounded-2xl
+          p-5
+          outline-none
+          focus:border-orange-300
+        "
+      />
+
+      {/* FILTERS */}
+
+      <div className="flex gap-3">
+
+        <button
+          onClick={() =>
+            setStatusFilter("all")
+          }
+          className={`
+            px-5
+            py-2
+            rounded-xl
+            ${statusFilter === "all"
+              ? "bg-orange-300 text-slate-900"
+              : "bg-slate-800"
+            }
+          `}
+        >
+          All
+        </button>
+
+        <button
+          onClick={() =>
+            setStatusFilter("online")
+          }
+          className={`
+            px-5
+            py-2
+            rounded-xl
+            ${statusFilter === "online"
+              ? "bg-green-400 text-slate-900"
+              : "bg-slate-800"
+            }
+          `}
+        >
+          Online
+        </button>
+
+        <button
+          onClick={() =>
+            setStatusFilter("offline")
+          }
+          className={`
+            px-5
+            py-2
+            rounded-xl
+            ${statusFilter === "offline"
+              ? "bg-red-400 text-slate-900"
+              : "bg-slate-800"
+            }
+          `}
+        >
+          Offline
+        </button>
+
+      </div>
+
+      {/* DEVICES */}
+
+      <div
+        className="
+          grid
+          grid-cols-1
+          md:grid-cols-2
+          xl:grid-cols-3
+          gap-6
+        "
+      >
+
+        {filteredDevices.map(
+          (device) => (
+
+            <Link
+              key={device.deviceId}
+              to={`/devices/${device.deviceId}`}
+              className="
+                bg-slate-800
+                border
+                border-slate-700
+                rounded-2xl
+                p-6
+                hover:border-orange-300
+                hover:-translate-y-1
+                transition
+              "
+            >
+
+              <div className="flex justify-between mb-4">
+
+                <h2
+                  className="
+                    text-xl
+                    font-bold
+                  "
+                >
+                  {device.deviceName}
+                </h2>
+
+                <span
+                  className={
+                    device.isOnline
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }
+                >
+                  ●
+                </span>
+
+              </div>
+
+              <p className="text-slate-400 mb-3">
+                {device.roomName}
+              </p>
+
+              <div className="space-y-2">
+
+                <div>
+                  📡 {device.deviceModel}
+                </div>
+
+                <div>
+                  ⚙️ {device.firmwareVersion}
+                </div>
+
+              </div>
+
+              <div
+                className="
+                  mt-5
+                  text-orange-300
+                  font-semibold
+                "
+              >
+                View Device →
+              </div>
+
+            </Link>
+
+          )
+        )}
+
+      </div>
+
+    </div>
   );
 }

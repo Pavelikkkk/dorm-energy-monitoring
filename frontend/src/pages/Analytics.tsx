@@ -13,6 +13,9 @@ import StatusBadge from "../components/StatusBadge";
 import PowerChart from "../components/PowerChart";
 import TopRooms from "../components/TopRooms";
 
+import TopConsumersChart from "../components/TopConsumersChart";
+import AnomaliesChart from "../components/AnomaliesChart";
+
 export default function Analytics() {
   const [stats, setStats] = useState({
     rooms: 0,
@@ -63,13 +66,15 @@ export default function Analytics() {
       const sortedRooms =
         [...roomsData]
           .sort(
-            (a, b) =>
-              b.power - a.power
+            (a: any, b: any) =>
+              (b.power ?? 0) -
+              (a.power ?? 0)
           )
           .slice(0, 5);
 
       setRooms(sortedRooms);
-    } catch (error) {
+    }
+    catch (error) {
       console.error(error);
     }
   }
@@ -152,7 +157,7 @@ export default function Analytics() {
 
       </div>
 
-      {/* POWER CHART */}
+      {/* POWER HISTORY */}
 
       <h2 className="text-3xl font-bold mb-4">
         Power Consumption
@@ -161,6 +166,16 @@ export default function Analytics() {
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-8">
 
         <PowerChart />
+
+      </div>
+
+      {/* NEW ANALYTICS */}
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+
+        <TopConsumersChart />
+
+        <AnomaliesChart />
 
       </div>
 
@@ -193,6 +208,7 @@ export default function Analytics() {
         </div>
 
       </div>
+
     </>
   );
 }

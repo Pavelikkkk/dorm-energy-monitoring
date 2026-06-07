@@ -50,3 +50,21 @@ export async function getBuildings() {
 
   return response.json();
 }
+
+export async function getTopConsumers() {
+  const response =
+    await fetch(
+      `${API_URL}/api/analytics/top-consumers`
+    );
+
+  return response.json();
+}
+
+export async function getAnomalyStatistics() {
+  const response =
+    await fetch(
+      `${API_URL}/api/analytics/anomalies-by-type`
+    );
+
+  return response.json();
+}

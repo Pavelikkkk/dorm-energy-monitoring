@@ -11,7 +11,7 @@ namespace dorm_energy::cli
 
 namespace dorm_energy::application
 {
-    class AppConfig
+    class AppConfig // в будущем возможно раздилить его
     {
     public:
         bool isVerbose() const { return verbose_; }

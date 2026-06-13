@@ -1,77 +1,49 @@
-// include/dorm_energy/application/application_builder.hpp
 #pragma once
 
-#include "dorm_energy/application/application.hpp"
-#include "dorm_energy/application/commands/daemon_command.hpp"
-#include "dorm_energy/application/commands/simulate_command.hpp"
 #include "dorm_energy/application/config/app_config.hpp"
-#include "dorm_energy/application/imessage_handler.hpp"
-#include "dorm_energy/application/inotifier.hpp"
-
-#include "dorm_energy/domain/detection/istate_detector.hpp"
-#include "dorm_energy/domain/logging/ilogger.hpp"
-#include "dorm_energy/domain/mqtt/imqtt_connection.hpp"
-#include "dorm_energy/domain/mqtt/imqtt_message_dispatcher.hpp"
-#include "dorm_energy/domain/mqtt/imqtt_subscription.hpp"
-#include "dorm_energy/domain/simulation/idata_generator.hpp"
-#include "dorm_energy/domain/storage/imeasurement_repository.hpp"
-#include "dorm_energy/infrastructure/mqtt/mqtt_client.hpp"
-
-#include "dorm_energy/application/auth/auth_service.hpp"
-#include "dorm_energy/application/notifier_service.hpp"
-#include "dorm_energy/infrastructure/cli/cli_parser.hpp"
-#include "dorm_energy/infrastructure/notifier/console_notifier.hpp"
-#include "dorm_energy/infrastructure/notifier/telegram_notifier.hpp"
-#include "dorm_energy/infrastructure/web/server/web_server.hpp"
+#include "dorm_energy/application/factories/auth_factory.hpp"
+#include "dorm_energy/application/factories/cli_factory.hpp"
+#include "dorm_energy/application/factories/command_factory.hpp"
+#include "dorm_energy/application/factories/detection_factory.hpp"
+#include "dorm_energy/application/factories/logger_factory.hpp"
+#include "dorm_energy/application/factories/message_handler_factory.hpp"
+#include "dorm_energy/application/factories/mqtt_factory.hpp"
+#include "dorm_energy/application/factories/notification_factory.hpp"
+#include "dorm_energy/application/factories/repository_factory.hpp"
+#include "dorm_energy/application/factories/simulation_factory.hpp"
+#include "dorm_energy/application/factories/state_factory.hpp"
+#include "dorm_energy/application/factories/web_server_factory.hpp"
 
 #include <memory>
 
 namespace dorm_energy::application
 {
+    class Application;
 
-    /**
-     * @brief
-     */
     class ApplicationBuilder
     {
     public:
-        ApplicationBuilder();
+        ApplicationBuilder() = default;
 
-        /**
-         * @brief
-         */
         ApplicationBuilder &withConfig(AppConfig config);
 
         std::unique_ptr<Application> build();
 
     private:
-        AppConfig config_;
-        std::shared_ptr<storage::IMeasurementRepository> repository_;
-        std::shared_ptr<dorm_energy::detection::RoomStateAggregator> aggregator_;
+        AppConfig config_{};
 
-        std::shared_ptr<dorm_energy::logging::ILogger> createLogger();
-
-        std::unique_ptr<dorm_energy::simulation::IDataGenerator> createGenerator();
-        std::unique_ptr<dorm_energy::detection::IStateDetector> createDetector();
-        std::shared_ptr<dorm_energy::storage::IMeasurementRepository> createRepository();
-        std::unique_ptr<dorm_energy::application::IMessageHandler> createMessageHandler();
-        std::unique_ptr<dorm_energy::application::INotifier> createNotifier();
-
-        std::shared_ptr<dorm_energy::mqtt::MqttClient> createSharedMqttClient();
-
-        std::shared_ptr<dorm_energy::mqtt::IMqttConnection> createMqttConnection();
-        std::shared_ptr<dorm_energy::mqtt::IMqttSubscription> createMqttSubscription();
-        std::shared_ptr<dorm_energy::mqtt::IMqttMessageDispatcher> createMqttDispatcher();
-
-        std::unique_ptr<dorm_energy::cli::CliParser> createCliParser();
-
-        std::unique_ptr<dorm_energy::application::SimulateCommand> createSimulateCommand();
-        std::unique_ptr<dorm_energy::application::DaemonCommand> createDaemonCommand();
-        std::shared_ptr<dorm_energy::web::WebServer> createWebServer();
-        std::shared_ptr<dorm_energy::detection::RoomStateAggregator> createAggregator();
-        std::shared_ptr<AuthService> createAuthService();
-
-        void applyCliOverrides(dorm_energy::cli::CommandOptions cliOptions);
+        factories::AuthFactory authFactory_{config_};
+        factories::CliFactory cliFactory_{};
+        factories::CommandFactory commandFactory_{config_};
+        factories::DetectionFactory detectionFactory_{config_};
+        factories::LoggerFactory loggerFactory_{config_};
+        factories::MessageHandlerFactory messageHandlerFactory_{};
+        factories::MqttFactory mqttFactory_{config_};
+        factories::NotificationFactory notificationFactory_{config_};
+        factories::RepositoryFactory repositoryFactory_{config_};
+        factories::SimulationFactory simulationFactory_{config_};
+        factories::StateFactory stateFactory_{};
+        factories::WebServerFactory webServerFactory_{};
     };
 
 } // namespace dorm_energy::application

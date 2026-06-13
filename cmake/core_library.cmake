@@ -47,6 +47,18 @@ add_library(dorm_energy_core STATIC
 
     # Application
     src/dorm_energy/application/config/app_config.cpp
+    src/dorm_energy/application/factories/auth_factory.cpp
+    src/dorm_energy/application/factories/cli_factory.cpp
+    src/dorm_energy/application/factories/command_factory.cpp
+    src/dorm_energy/application/factories/detection_factory.cpp
+    src/dorm_energy/application/factories/logger_factory.cpp
+    src/dorm_energy/application/factories/message_handler_factory.cpp
+    src/dorm_energy/application/factories/mqtt_factory.cpp
+    src/dorm_energy/application/factories/notification_factory.cpp
+    src/dorm_energy/application/factories/repository_factory.cpp
+    src/dorm_energy/application/factories/simulation_factory.cpp
+    src/dorm_energy/application/factories/state_factory.cpp
+    src/dorm_energy/application/factories/web_server_factory.cpp
     src/dorm_energy/application/commands/simulate_command.cpp
     src/dorm_energy/application/commands/daemon_command.cpp
     src/dorm_energy/application/application_builder.cpp
